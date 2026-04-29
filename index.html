@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar DICOM | IF Baiano</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        :root {
+            --verde-if: #2E8B57; /* Cor principal */
+            --verde-escuro: #1b5e20;
+            --fundo: #f4f7f6;
+            --texto: #333333;
+            --branco: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--fundo);
+            color: var(--texto);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background-color: var(--branco);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--verde-if);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--verde-if);
+            margin: 0;
+            font-size: 28px;
+        }
+
+        p {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Estilo da Tabela */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--verde-if);
+            color: var(--branco);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background-color: #f1f8f4;
+            transition: 0.2s;
+        }
+
+        .tag-campus {
+            background-color: #e8f5e9;
+            color: var(--verde-escuro);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .link-btn {
+            background-color: var(--verde-if);
+            color: var(--branco);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .link-btn:hover {
+            background-color: var(--verde-escuro);
+        }
+
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📊 Radar de Notícias</h1>
+            <p>Monitoramento automático de publicações dos campi</p>
+        </header>
+
+        <div id="status" class="loading">Carregando dados das notícias...</div>
+
+        <table id="tabela-noticias" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Campus</th>
+                    <th>Título da Notícia</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody id="corpo-tabela">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Caminho para o arquivo CSV gerado pelo GitHub Actions
+        const csvUrl = 'data/noticias_if.csv';
+
+        // Função para formatar a data de AAAA-MM-DD para DD/MM/AAAA
+        function formatarData(dataIso) {
+            if (!dataIso) return '-';
+            const partes = dataIso.split('-');
+            if (partes.length !== 3) return dataIso;
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        // Usando PapaParse para ler o CSV
+        Papa.parse(csvUrl, {
+            download: true,
+            header: true, // Avisa que a primeira linha é o cabeçalho
+            skipEmptyLines: true,
+            complete: function(results) {
+                const dados = results.data;
+                const tbody = document.getElementById('corpo-tabela');
+                const tabela = document.getElementById('tabela-noticias');
+                const status = document.getElementById('status');
+
+                if (dados.length === 0) {
+                    status.innerHTML = "Nenhuma notícia encontrada no banco de dados.";
+                    return;
+                }
+
+                // Inverte a ordem para mostrar as mais recentes primeiro
+                dados.reverse().forEach(linha => {
+                    const tr = document.createElement('tr');
+                    
+                    tr.innerHTML = `
+                        <td>${formatarData(linha.data)}</td>
+                        <td><span class="tag-campus">${linha.campus}</span></td>
+                        <td><strong>${linha.titulo}</strong></td>
+                        <td><a href="${linha.link}" target="_blank" class="link-btn">Ler Notícia</a></td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+
+                // Esconde a mensagem de carregamento e mostra a tabela
+                status.style.display = 'none';
+                tabela.style.display = 'table';
+            },
+            error: function(error) {
+                console.error("Erro ao ler o CSV:", error);
+                document.getElementById('status').innerHTML = "Erro ao carregar os dados. Verifique se o Radar já foi executado.";
+            }
+        });
+    </script>
+</body>
+</html>
