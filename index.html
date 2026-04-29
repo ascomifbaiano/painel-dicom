@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar DICOM | IF Baiano</title>
+    <title>Radar DICOM | IF Baiano v1.1.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <style>
         :root {
-            --verde-if: #2E8B57; /* Cor principal */
+            --verde-if: #2E8B57; 
             --verde-escuro: #1b5e20;
             --fundo: #f4f7f6;
             --texto: #333333;
@@ -54,7 +54,6 @@
             margin-top: 5px;
         }
 
-        /* Estilo da Tabela */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -110,6 +109,13 @@
             font-style: italic;
             color: #888;
         }
+        
+        .versao {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 30px;
+        }
     </style>
 </head>
 <body>
@@ -120,27 +126,27 @@
             <p>Monitoramento automático de publicações dos campi</p>
         </header>
 
-        <div id="status" class="loading">Carregando dados das notícias...</div>
+        <div id="status" class="loading">Sincronizando com a base de dados...</div>
 
         <table id="tabela-noticias" style="display: none;">
             <thead>
                 <tr>
                     <th>Data</th>
-                    <th>Campus</th>
+                    <th>Unidade</th>
                     <th>Título da Notícia</th>
                     <th>Ação</th>
                 </tr>
             </thead>
             <tbody id="corpo-tabela">
-                </tbody>
+            </tbody>
         </table>
+        
+        <div class="versao">Radar DICOM v1.1.0</div>
     </div>
 
     <script>
-        // Caminho para o arquivo CSV gerado pelo GitHub Actions
         const csvUrl = 'data/noticias_if.csv';
 
-        // Função para formatar a data de AAAA-MM-DD para DD/MM/AAAA
         function formatarData(dataIso) {
             if (!dataIso) return '-';
             const partes = dataIso.split('-');
@@ -148,10 +154,9 @@
             return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
 
-        // Usando PapaParse para ler o CSV
         Papa.parse(csvUrl, {
             download: true,
-            header: true, // Avisa que a primeira linha é o cabeçalho
+            header: true, 
             skipEmptyLines: true,
             complete: function(results) {
                 const dados = results.data;
@@ -160,31 +165,29 @@
                 const status = document.getElementById('status');
 
                 if (dados.length === 0) {
-                    status.innerHTML = "Nenhuma notícia encontrada no banco de dados.";
+                    status.innerHTML = "Nenhuma notícia encontrada.";
                     return;
                 }
 
-                // Inverte a ordem para mostrar as mais recentes primeiro
-                dados.reverse().forEach(linha => {
+                dados.forEach(linha => {
                     const tr = document.createElement('tr');
                     
                     tr.innerHTML = `
                         <td>${formatarData(linha.data)}</td>
                         <td><span class="tag-campus">${linha.campus}</span></td>
                         <td><strong>${linha.titulo}</strong></td>
-                        <td><a href="${linha.link}" target="_blank" class="link-btn">Ler Notícia</a></td>
+                        <td><a href="${linha.link}" target="_blank" class="link-btn">Ler</a></td>
                     `;
                     
                     tbody.appendChild(tr);
                 });
 
-                // Esconde a mensagem de carregamento e mostra a tabela
                 status.style.display = 'none';
                 tabela.style.display = 'table';
             },
             error: function(error) {
-                console.error("Erro ao ler o CSV:", error);
-                document.getElementById('status').innerHTML = "Erro ao carregar os dados. Verifique se o Radar já foi executado.";
+                console.error("Erro ao ler:", error);
+                document.getElementById('status').innerHTML = "Banco de dados não encontrado ou em atualização.";
             }
         });
     </script>
