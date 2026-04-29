@@ -1,13 +1,15 @@
-# scraper.py - v1.5.0
+# scraper.py - v1.6.0
 import requests
 import pandas as pd
 import os
 import html
+from datetime import datetime
 
 # ==========================================
 # 1. CONFIGURAÇÕES GERAIS
 # ==========================================
 ARQUIVO_CSV = 'data/noticias_if.csv'
+DATA_LIMITE = '2024-01-01' # O robô não pegará nada anterior a isso
 
 UNIDADES = [
     { "id": "Reitoria", "url": "https://www.ifbaiano.edu.br/portal/wp-json/wp/v2/posts/" },
@@ -28,7 +30,7 @@ UNIDADES = [
 ]
 
 # ==========================================
-# 2. FUNÇÃO DE EXTRAÇÃO (API REST)
+# 2. EXTRAÇÃO COM TRAVA TEMPORAL
 # ==========================================
 def extrair_noticias():
     noticias_coletadas = []
@@ -46,12 +48,11 @@ def extrair_noticias():
             if sucesso_na_unidade:
                 break
                 
-            print(f"Coletando via API: {unidade['id']} | Tentando URL: {base_url}...")
-            
+            print(f"Coletando: {unidade['id']} | URL: {base_url}...")
             pagina = 1
-            max_paginas = 5 
+            limite_atingido = False
 
-            while pagina <= max_paginas:
+            while not limite_atingido:
                 try:
                     url = f"{base_url}?per_page=100&page={pagina}"
                     response = requests.get(url, headers=headers, timeout=20)
@@ -60,14 +61,18 @@ def extrair_noticias():
                         break
                         
                     posts = response.json()
-
                     if not posts or not isinstance(posts, list):
                         break 
 
                     for post in posts:
                         data_limpa = post.get('date', '').split('T')[0]
-                        titulo_limpo = html.unescape(post.get('title', {}).get('rendered', 'Sem Título'))
+                        
+                        # Trava temporal: Se a notícia for mais velha que 2024, paramos
+                        if data_limpa < DATA_LIMITE:
+                            limite_atingido = True
+                            break
 
+                        titulo_limpo = html.unescape(post.get('title', {}).get('rendered', 'Sem Título'))
                         noticias_coletadas.append({
                             'campus': unidade['id'],
                             'titulo': titulo_limpo,
@@ -75,45 +80,50 @@ def extrair_noticias():
                             'data': data_limpa
                         })
                     
-                    sucesso_na_unidade = True
-                    print(f"   ✓ {unidade['id']} - Página {pagina} coletada com sucesso!")
-                    pagina += 1
-                    
+                    if not limite_atingido:
+                        print(f"   ✓ Página {pagina} processada.")
+                        pagina += 1
+                        
                 except Exception as e:
-                    print(f"   X Erro na página {pagina} de {unidade['id']}: {e}")
+                    print(f"   X Erro na página {pagina}: {e}")
                     break 
+
+            if len(noticias_coletadas) > 0:
+                sucesso_na_unidade = True
 
     return pd.DataFrame(noticias_coletadas)
 
 # ==========================================
-# 3. FUNÇÃO DE LIMPEZA E SALVAMENTO
+# 3. SALVAMENTO INCREMENTAL
 # ==========================================
 def limpar_e_salvar_dados(df_novo):
     if df_novo.empty:
-        print("Nenhum dado retornado pelas APIs.")
+        print("Nenhum dado novo retornado.")
         return
 
     df_novo = df_novo.dropna(subset=['data'])
     os.makedirs(os.path.dirname(ARQUIVO_CSV), exist_ok=True)
 
     if os.path.exists(ARQUIVO_CSV):
-        print("Sincronizando e atualizando o histórico...")
+        print("Atualizando histórico incremental...")
         df_existente = pd.read_csv(ARQUIVO_CSV)
         df_final = pd.concat([df_existente, df_novo], ignore_index=True)
+        # Mantém a última versão e evita duplicatas absolutas
         df_final = df_final.drop_duplicates(subset=['link'], keep='last')
     else:
-        print("Iniciando novo banco de dados histórico...")
+        print("Criando banco de dados...")
         df_final = df_novo
 
+    # Ordenação decrescente antes de salvar
     df_final = df_final.sort_values(by='data', ascending=False)
     df_final.to_csv(ARQUIVO_CSV, index=False, encoding='utf-8')
-    print(f"Sucesso! CSV Atualizado. Total de registros globais: {len(df_final)}")
+    print(f"Sucesso! Banco atualizado. Total de notícias: {len(df_final)}")
 
 # ==========================================
 # 4. EXECUÇÃO
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.5.0...")
+    print("Iniciando Painel DICOM v1.6.0...")
     df_dados = extrair_noticias()
     limpar_e_salvar_dados(df_dados)
-    print("Processo v1.5.0 finalizado.")
+    print("Processo v1.6.0 finalizado.")
