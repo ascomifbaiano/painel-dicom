@@ -1,98 +1,102 @@
+# scraper.py - v1.1.0
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
 import os
-from datetime import datetime
+import html
 
 # ==========================================
 # 1. CONFIGURAÇÕES GERAIS
 # ==========================================
 ARQUIVO_CSV = 'data/noticias_if.csv'
 
-# Exemplo de lista de sites para varrer (pode ser expandida para os 18 campi)
-SITES_ALVO = [
-    {"campus": "Reitoria", "url": "https://ifbaiano.edu.br/portal/noticias/"},
-    {"campus": "Bom Jesus da Lapa", "url": "https://ifbaiano.edu.br/portal/lapa/noticias/"}
+# Lista das unidades consumindo a API REST do WordPress
+UNIDADES = [
+    { "id": "Reitoria", "url": "https://www.ifbaiano.edu.br/portal/wp-json/wp/v2/posts/" },
+    { "id": "Alagoinhas", "url": "https://www.ifbaiano.edu.br/unidades/alagoinhas/wp-json/wp/v2/posts/" },
+    { "id": "Lapa", "url": "https://www.ifbaiano.edu.br/unidades/lapa/wp-json/wp/v2/posts/" },
+    { "id": "Catu", "url": "https://www.ifbaiano.edu.br/unidades/catu/wp-json/wp/v2/posts/" },
+    { "id": "Mangabeira", "url": "https://www.ifbaiano.edu.br/unidades/gmb/wp-json/wp/v2/posts/" },
+    { "id": "Guanambi", "url": "https://www.ifbaiano.edu.br/unidades/guanambi/wp-json/wp/v2/posts/" },
+    { "id": "Itaberaba", "url": "https://www.ifbaiano.edu.br/unidades/itaberaba/wp-json/wp/v2/posts/" },
+    { "id": "Itapetinga", "url": "https://www.ifbaiano.edu.br/unidades/itapetinga/wp-json/wp/v2/posts/" },
+    { "id": "Santa Inês", "url": "https://www.ifbaiano.edu.br/unidades/santaines/wp-json/wp/v2/posts/" },
+    { "id": "Bonfim", "url": "https://www.ifbaiano.edu.br/unidades/bonfim/wp-json/wp/v2/posts/" },
+    { "id": "Serrinha", "url": "https://www.ifbaiano.edu.br/unidades/serrinha/wp-json/wp/v2/posts/" },
+    { "id": "Teixeira", "url": "https://www.ifbaiano.edu.br/unidades/teixeira/wp-json/wp/v2/posts/" },
+    { "id": "Uruçuca", "url": "https://www.ifbaiano.edu.br/unidades/urucuca/wp-json/wp/v2/posts/" },
+    { "id": "Valença", "url": "https://www.ifbaiano.edu.br/unidades/valenca/wp-json/wp/v2/posts/" },
+    { "id": "Xique-Xique", "url": "https://www.ifbaiano.edu.br/unidades/xique-xique/wp-json/wp/v2/posts/" }
 ]
 
 # ==========================================
-# 2. FUNÇÃO DE EXTRAÇÃO (WEB SCRAPING)
+# 2. FUNÇÃO DE EXTRAÇÃO (API REST)
 # ==========================================
 def extrair_noticias():
-    noticias_raspadas = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    noticias_coletadas = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
-    for site in SITES_ALVO:
+    for unidade in UNIDADES:
         try:
-            print(f"Acessando: {site['campus']}...")
-            response = requests.get(site['url'], headers=headers, timeout=10)
+            print(f"Coletando via API: {unidade['id']}...")
+            # O parâmetro per_page=20 traz as 20 últimas notícias de cada campus de uma vez
+            response = requests.get(f"{unidade['url']}?per_page=20", headers=headers, timeout=15)
             response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Lê o JSON retornado pela API
+            posts = response.json()
 
-            # ATENÇÃO: As classes HTML abaixo ('article.noticia', 'h2.titulo', etc.) 
-            # precisam ser ajustadas de acordo com o código fonte real do site do IF Baiano.
-            artigos = soup.find_all('article', class_='category-noticias') # Exemplo genérico WordPress
+            for post in posts:
+                # O WordPress retorna a data no formato ISO "YYYY-MM-DDTHH:MM:SS"
+                data_limpa = post.get('date', '').split('T')[0]
+                
+                # Decodifica entidades HTML do título (ex: &#8211; vira um traço normal)
+                titulo_limpo = html.unescape(post.get('title', {}).get('rendered', 'Sem Título'))
 
-            for artigo in artigos:
-                titulo_tag = artigo.find('h2')
-                link_tag = artigo.find('a')
-                data_tag = artigo.find('time') # ou span com a data
-
-                if titulo_tag and link_tag and data_tag:
-                    noticias_raspadas.append({
-                        'campus': site['campus'],
-                        'titulo': titulo_tag.get_text(strip=True),
-                        'link': link_tag['href'],
-                        'data_bruta': data_tag.get_text(strip=True) # Ex: "29 de Abril de 2026" ou "29/04/2026"
-                    })
+                noticias_coletadas.append({
+                    'campus': unidade['id'],
+                    'titulo': titulo_limpo,
+                    'link': post.get('link', ''),
+                    'data': data_limpa
+                })
         except Exception as e:
-            print(f"Erro ao acessar {site['campus']}: {e}")
+            print(f"Erro na API de {unidade['id']}: {e}")
 
-    return pd.DataFrame(noticias_raspadas)
+    return pd.DataFrame(noticias_coletadas)
 
 # ==========================================
-# 3. FUNÇÃO DE LIMPEZA E PADRONIZAÇÃO (ENGENHARIA DE DADOS)
+# 3. FUNÇÃO DE LIMPEZA E SALVAMENTO
 # ==========================================
 def limpar_e_salvar_dados(df_novo):
     if df_novo.empty:
-        print("Nenhuma notícia nova encontrada na extração de hoje.")
+        print("Nenhum dado retornado pelas APIs.")
         return
 
-    # DESAFIO 2: Garantir que a data esteja em AAAA-MM-DD
-    # Converte a coluna de data (assumindo que no site ela vem como DD/MM/AAAA)
-    # O parâmetro dayfirst=True é crucial para datas brasileiras
-    df_novo['data'] = pd.to_datetime(df_novo['data_bruta'], format='%d/%m/%Y', errors='coerce').dt.strftime('%Y-%m-%d')
-    
-    # Removemos a coluna bruta, pois o Dashboard só precisa da data formatada
-    df_novo = df_novo.drop(columns=['data_bruta'])
+    # Garante que as linhas sem data válida sejam removidas
+    df_novo = df_novo.dropna(subset=['data'])
 
-    # Cria a pasta 'data' se ela não existir
     os.makedirs(os.path.dirname(ARQUIVO_CSV), exist_ok=True)
 
-    # DESAFIO 3: Lógica de Deduplicação
+    # Upsert: Mescla com o histórico e remove duplicatas baseadas no link
     if os.path.exists(ARQUIVO_CSV):
-        print("Arquivo CSV existente encontrado. Iniciando mesclagem e deduplicação...")
+        print("Sincronizando com o banco de dados existente...")
         df_existente = pd.read_csv(ARQUIVO_CSV)
-        
-        # Junta os dados antigos com os que acabamos de raspar
         df_final = pd.concat([df_existente, df_novo], ignore_index=True)
-        
-        # Remove as duplicatas usando o 'link' como identificador único (a chave primária)
-        # O keep='last' garante que, se uma notícia foi atualizada, ficamos com a versão mais recente
         df_final = df_final.drop_duplicates(subset=['link'], keep='last')
     else:
-        print("Arquivo CSV não encontrado. Criando o primeiro banco de dados...")
+        print("Iniciando novo banco de dados...")
         df_final = df_novo
 
-    # DESAFIO 1: Exportar os dados em CSV estruturado
+    # Ordena cronologicamente antes de salvar
+    df_final = df_final.sort_values(by='data', ascending=False)
+    
     df_final.to_csv(ARQUIVO_CSV, index=False, encoding='utf-8')
-    print(f"Sucesso! Banco de dados atualizado. Total de registros: {len(df_final)}")
+    print(f"Sucesso! CSV Atualizado. Total de registros globais: {len(df_final)}")
 
 # ==========================================
-# 4. EXECUÇÃO PRINCIPAL
+# 4. EXECUÇÃO
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Radar de Notícias...")
-    df_dados_novos = extrair_noticias()
-    limpar_e_salvar_dados(df_dados_novos)
-    print("Pipeline finalizado.")
+    print("Iniciando Radar de Notícias DICOM v1.1.0...")
+    df_dados = extrair_noticias()
+    limpar_e_salvar_dados(df_dados)
+    print("Processo finalizado.")
