@@ -1,4 +1,4 @@
-# update_data.yml - v1.6.0
+# update_data.yml - v1.7.0
 name: Automação do Painel DICOM
 
 on:
@@ -24,10 +24,10 @@ jobs:
       - name: 4. Executar Motor do Painel
         run: python scraper.py
 
-      - name: 5. Salvar dados incrementais
+      - name: 5. Salvar dados incrementais e purga
         run: |
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Atualização Diária v1.6.0"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Atualização Diária & Limpeza (Painel v1.7.0)"
           git push
