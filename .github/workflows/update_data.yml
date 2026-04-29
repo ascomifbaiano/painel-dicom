@@ -1,4 +1,4 @@
-# update_data.yml - v1.1.0
+# update_data.yml - v1.2.0
 name: Automação do Radar de Notícias DICOM
 
 on:
@@ -29,5 +29,5 @@ jobs:
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada hoje."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Atualização via API REST (Radar v1.1.0)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Atualização via API REST (Radar v1.2.0)"
           git push
