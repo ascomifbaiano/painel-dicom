@@ -1,9 +1,9 @@
-# update_data.yml - v1.5.0
+# update_data.yml - v1.6.0
 name: Automação do Painel DICOM
 
 on:
   schedule:
-    - cron: '0 3 * * *' 
+    - cron: '0 9 * * *' # Executa às 09:00 UTC (06:00 Horário de Brasília) diariamente
   workflow_dispatch: 
 
 jobs:
@@ -24,10 +24,10 @@ jobs:
       - name: 4. Executar Motor do Painel
         run: python scraper.py
 
-      - name: 5. Salvar dados de forma segura
+      - name: 5. Salvar dados incrementais
         run: |
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Atualização Painel DICOM v1.5.0 (Brand Edition)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Atualização Diária v1.6.0"
           git push
