@@ -1,0 +1,32 @@
+name: Automação do Radar de Notícias DICOM
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Executa às 03:00 UTC (Meia-noite em Salvador) diariamente
+  workflow_dispatch: # Adiciona um botão no GitHub para rodar manualmente quando quiser
+
+jobs:
+  atualizar-dados:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar o ambiente Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 3. Instalar dependências necessárias
+        run: pip install -r requirements.txt
+
+      - name: 4. Executar o robô de raspagem (Scraper)
+        run: python scraper.py
+
+      - name: 5. Salvar novos dados (Commit e Push)
+        run: |
+          git config --global user.name "Robo DICOM"
+          git config --global user.email "automacao@dicom.ifbaiano"
+          git add data/noticias_if.csv
+          git commit -m "⚙️ Atualização automática do banco de dados (Radar)" || echo "Sem mudanças para salvar hoje"
+          git push
