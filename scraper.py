@@ -1,4 +1,4 @@
-# scraper.py - v1.3.0
+# scraper.py - v1.5.0
 import requests
 import pandas as pd
 import os
@@ -28,17 +28,15 @@ UNIDADES = [
 ]
 
 # ==========================================
-# 2. FUNÇÃO DE EXTRAÇÃO COM PAGINAÇÃO E FALLBACK
+# 2. FUNÇÃO DE EXTRAÇÃO (API REST)
 # ==========================================
 def extrair_noticias():
     noticias_coletadas = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
     for unidade in UNIDADES:
-        # Sistema de Fallback exclusivo para a Reitoria
         urls_para_testar = [unidade['url']]
         if unidade['id'] == 'Reitoria':
-            # Adiciona rotas alternativas caso a principal falhe
             urls_para_testar.append("https://ifbaiano.edu.br/portal/wp-json/wp/v2/posts/")
             urls_para_testar.append("https://www.ifbaiano.edu.br/wp-json/wp/v2/posts/")
 
@@ -51,22 +49,20 @@ def extrair_noticias():
             print(f"Coletando via API: {unidade['id']} | Tentando URL: {base_url}...")
             
             pagina = 1
-            max_paginas = 5 # Puxa até 5 páginas (500 notícias por campus)
+            max_paginas = 5 
 
             while pagina <= max_paginas:
                 try:
-                    # Paginação ativada: traz 100 por vez
                     url = f"{base_url}?per_page=100&page={pagina}"
                     response = requests.get(url, headers=headers, timeout=20)
                     
-                    # Se retornar erro (ex: página não existe), encerra o loop dessa unidade
                     if response.status_code != 200:
                         break
                         
                     posts = response.json()
 
                     if not posts or not isinstance(posts, list):
-                        break # Acabaram as notícias
+                        break 
 
                     for post in posts:
                         data_limpa = post.get('date', '').split('T')[0]
@@ -85,7 +81,7 @@ def extrair_noticias():
                     
                 except Exception as e:
                     print(f"   X Erro na página {pagina} de {unidade['id']}: {e}")
-                    break # Tenta o próximo fallback ou vai para o próximo campus
+                    break 
 
     return pd.DataFrame(noticias_coletadas)
 
@@ -104,7 +100,6 @@ def limpar_e_salvar_dados(df_novo):
         print("Sincronizando e atualizando o histórico...")
         df_existente = pd.read_csv(ARQUIVO_CSV)
         df_final = pd.concat([df_existente, df_novo], ignore_index=True)
-        # O keep='first' aqui garante que não duplicaremos
         df_final = df_final.drop_duplicates(subset=['link'], keep='last')
     else:
         print("Iniciando novo banco de dados histórico...")
@@ -118,7 +113,7 @@ def limpar_e_salvar_dados(df_novo):
 # 4. EXECUÇÃO
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Radar de Notícias DICOM v1.3.0...")
+    print("Iniciando Painel DICOM v1.5.0...")
     df_dados = extrair_noticias()
     limpar_e_salvar_dados(df_dados)
-    print("Processo v1.3.0 finalizado.")
+    print("Processo v1.5.0 finalizado.")
