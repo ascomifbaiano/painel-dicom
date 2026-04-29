@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar DICOM | IF Baiano v1.2.0</title>
+    <title>Radar DICOM | IF Baiano v1.3.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -19,96 +19,31 @@
             --borda: #e0e0e0;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--fundo);
-            color: var(--texto);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 1000px;
-            width: 100%;
-            background-color: var(--branco);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid var(--verde-if);
-            padding-bottom: 15px;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: var(--fundo); color: var(--texto); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 1000px; width: 100%; background-color: var(--branco); padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--verde-if); padding-bottom: 15px; }
         h1 { color: var(--verde-if); margin: 0; font-size: 28px; }
         p { color: #666; margin-top: 5px; }
 
-        /* Painel de Filtros */
-        .filtros-container {
-            display: flex;
-            gap: 15px;
-            background-color: #f9fbf9;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--borda);
-            margin-bottom: 25px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-
+        .filtros-container { display: flex; gap: 15px; background-color: #f9fbf9; padding: 15px; border-radius: 8px; border: 1px solid var(--borda); margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap; }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         .input-group label { font-size: 12px; font-weight: 600; color: #555; }
-        .input-group input { 
-            padding: 8px; 
-            border: 1px solid var(--borda); 
-            border-radius: 4px; 
-            font-family: inherit;
-        }
+        .input-group input { padding: 8px; border: 1px solid var(--borda); border-radius: 4px; font-family: inherit; }
 
-        .btn {
-            background-color: var(--verde-if);
-            color: var(--branco);
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .btn { background-color: var(--verde-if); color: var(--branco); border: none; padding: 10px 15px; border-radius: 4px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn:hover { background-color: var(--verde-escuro); }
         .btn-secundario { background-color: #9e9e9e; }
         .btn-secundario:hover { background-color: #757575; }
 
-        /* Gráfico */
-        .grafico-container {
-            margin-bottom: 30px;
-            padding: 15px;
-            border: 1px solid var(--borda);
-            border-radius: 8px;
-        }
-
-        /* Tabela */
+        .grafico-container { margin-bottom: 30px; padding: 15px; border: 1px solid var(--borda); border-radius: 8px; }
         .tabela-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: var(--verde-if); color: var(--branco); font-weight: 600; }
         tr:hover { background-color: #f1f8f4; }
         
-        .tag-campus {
-            background-color: #e8f5e9; color: var(--verde-escuro);
-            padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px;
-        }
-        .link-btn {
-            background-color: var(--verde-if); color: var(--branco); text-decoration: none;
-            padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;
-        }
+        .tag-campus { background-color: #e8f5e9; color: var(--verde-escuro); padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; }
+        .link-btn { background-color: var(--verde-if); color: var(--branco); text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; }
         .versao { text-align: center; font-size: 11px; color: #999; margin-top: 10px; }
         .loading { text-align: center; font-style: italic; color: #888; }
     </style>
@@ -157,22 +92,20 @@
             </div>
         </div>
         
-        <div class="versao">Radar DICOM v1.2.0</div>
+        <div class="versao">Radar DICOM v1.3.0</div>
     </div>
 
     <script>
         const csvUrl = 'data/noticias_if.csv';
-        let dadosGlobais = []; // Guarda todos os dados
-        let graficoAtual = null; // Instância do gráfico
+        let dadosGlobais = []; 
+        let graficoAtual = null; 
 
-        // Converte data ISO para exibição BR
         function formatarDataBR(dataIso) {
             if (!dataIso) return '-';
             const partes = dataIso.split('-');
             return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : dataIso;
         }
 
-        // Lê o CSV ao abrir a página
         Papa.parse(csvUrl, {
             download: true,
             header: true, 
@@ -195,16 +128,14 @@
             }
         });
 
-        // Atualiza Gráfico e Tabela
         function atualizarDashboard(dados) {
             renderizarTabela(dados);
             renderizarGrafico(dados);
         }
 
-        // Monta a Tabela HTML
         function renderizarTabela(dados) {
             const tbody = document.getElementById('corpo-tabela');
-            tbody.innerHTML = ''; // Limpa a tabela
+            tbody.innerHTML = ''; 
             
             dados.forEach(linha => {
                 const tr = document.createElement('tr');
@@ -218,9 +149,7 @@
             });
         }
 
-        // Monta o Gráfico Chart.js
         function renderizarGrafico(dados) {
-            // Conta as publicações por campus
             const contagem = {};
             dados.forEach(item => {
                 if(item.campus) {
@@ -228,13 +157,11 @@
                 }
             });
 
-            // Ordena os campi do que tem mais para o que tem menos
             const campiOrdenados = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
             const valoresOrdenados = campiOrdenados.map(campus => contagem[campus]);
 
             const ctx = document.getElementById('graficoCampi').getContext('2d');
             
-            // Destrói o gráfico anterior se existir (para não sobrepor)
             if (graficoAtual) {
                 graficoAtual.destroy();
             }
@@ -263,13 +190,11 @@
             });
         }
 
-        // Lógica de Filtragem por Data
         function aplicarFiltros() {
             const dataInicio = document.getElementById('data-inicio').value;
             const dataFim = document.getElementById('data-fim').value;
             let dadosFiltrados = dadosGlobais;
 
-            // Como as datas no CSV estão em AAAA-MM-DD, podemos comparar como strings diretamente
             if (dataInicio) {
                 dadosFiltrados = dadosFiltrados.filter(item => item.data >= dataInicio);
             }
@@ -280,7 +205,6 @@
             atualizarDashboard(dadosFiltrados);
         }
 
-        // Limpa os filtros e volta ao padrão
         function limparFiltros() {
             document.getElementById('data-inicio').value = '';
             document.getElementById('data-fim').value = '';
