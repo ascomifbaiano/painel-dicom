@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.6.0</title>
+    <title>Painel DICOM | IF Baiano v1.7.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,7 +18,6 @@
         h1 { color: var(--verde-if); margin: 0; font-size: 26px; }
         p { color: #666; margin-top: 5px; font-size: 15px; }
 
-        /* Estilo dos Filtros */
         .filtros-container { display: flex; gap: 15px; background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap; border-left: 4px solid var(--verde-if); }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         .input-group label { font-size: 12px; font-weight: 600; color: #555; }
@@ -111,7 +110,7 @@
         </div>
     </div>
 
-    <div class="versao">Painel DICOM v1.6.0 - Historical & Filter Edition</div>
+    <div class="versao">Painel DICOM v1.7.0 - Rolling Window Edition</div>
 </div>
 
 <script>
@@ -121,11 +120,10 @@
     const corVerdeIF = '#2F9E41';
     const corVermelhaIF = '#E31B23';
 
-    // Lista Negra de Palavras
-    const stopWords = ['baiano', 'federal', 'sobre', 'para', 'com', 'pelos', 'pelas', 'campus', 'campi', 'instituto', 'processo', 'seletivo', 'curso', 'cursos', 'vagas', 'inscrições', 'edital', 'resultado', 'seleção', 'alunos', 'estudantes', 'entre'];
+    const stopWords = ['baiano', 'federal', 'sobre', 'para', 'com', 'pelos', 'pelas', 'campus', 'campi', 'instituto', 'processo', 'seletivo', 'curso', 'cursos', 'vagas', 'inscrições', 'edital', 'resultado', 'seleção', 'alunos', 'estudantes', 'entre', 'reitoria', 'unidade', 'IF', 'docentes', 'servidores'];
 
     let dadosGlobais = [];
-    let instanciasGraficos = {}; // Guarda os gráficos para destruí-updá-los ao filtrar
+    let instanciasGraficos = {}; 
 
     Papa.parse(csvUrl, {
         download: true, header: true, skipEmptyLines: true,
@@ -158,7 +156,6 @@
         const agora = new Date();
         const stats = { volume: {}, meses: {}, dias: {}, temas: {}, ultimaPost: {} };
 
-        // O termômetro de inatividade ignora filtros, ele SEMPRE olha o histórico global
         dadosGlobais.forEach(item => {
             const d = new Date(item.data + 'T12:00:00');
             if (isNaN(d)) return;
@@ -167,14 +164,12 @@
             }
         });
 
-        // O resto reage aos filtros
         dados.forEach(item => {
             const d = new Date(item.data + 'T12:00:00');
             if (isNaN(d)) return;
 
             stats.volume[item.campus] = (stats.volume[item.campus] || 0) + 1;
 
-            // Chave YYYY-MM garante ordenação cronológica natural
             const chaveMesAno = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             stats.meses[chaveMesAno] = (stats.meses[chaveMesAno] || 0) + 1;
 
@@ -182,7 +177,7 @@
 
             const palavras = item.titulo.toLowerCase().replace(/[.,!?;:()"]/g, '').split(/\s+/);
             palavras.forEach(p => {
-                if (p.length > 4 && !stopWords.includes(p)) {
+                if (p.length > 3 && !stopWords.includes(p)) {
                     stats.temas[p] = (stats.temas[p] || 0) + 1;
                 }
             });
@@ -210,7 +205,6 @@
             gridInat.appendChild(div);
         });
 
-        // Tabela
         const tbody = document.getElementById('tabela-corpo');
         tbody.innerHTML = '';
         dados.slice(0, 30).forEach(item => {
@@ -221,13 +215,11 @@
             tbody.appendChild(tr);
         });
 
-        // Função auxiliar para recriar gráficos sem sobreposição
         function recriarGrafico(idElemento, config) {
             if (instanciasGraficos[idElemento]) { instanciasGraficos[idElemento].destroy(); }
             instanciasGraficos[idElemento] = new Chart(document.getElementById(idElemento), config);
         }
 
-        // 1. Gráfico de Volume (Ordenado)
         const campiOrdem = Object.keys(stats.volume).sort((a, b) => stats.volume[b] - stats.volume[a]);
         recriarGrafico('chartVolume', {
             type: 'bar',
@@ -235,7 +227,6 @@
             options: { plugins: { title: { display: true, text: 'Volume Total por Unidade' } } }
         });
 
-        // 2. Gráfico Evolução Temporal (Ordem Cronológica Exata: YYYY-MM)
         const mesesKeys = Object.keys(stats.meses).sort(); 
         const labelsMesesBR = mesesKeys.map(k => {
             const [ano, mes] = k.split('-');
@@ -247,14 +238,12 @@
             options: { plugins: { title: { display: true, text: 'Evolução Temporal' } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // 3. Gráfico Dias
         recriarGrafico('chartDias', {
             type: 'radar',
             data: { labels: diasSemana, datasets: [{ label: 'Frequência', data: diasSemana.map(d => stats.dias[d] || 0), backgroundColor: 'rgba(47, 158, 65, 0.2)', borderColor: corVerdeIF, pointBackgroundColor: corVerdeIF }] },
             options: { plugins: { title: { display: true, text: 'Hábito de Publicação (Dia da Semana)' } } }
         });
 
-        // 4. Gráfico Temas
         const top5 = topTemaArr.slice(0, 5);
         recriarGrafico('chartTemas', {
             type: 'doughnut',
