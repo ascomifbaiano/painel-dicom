@@ -1,4 +1,4 @@
-# scraper.py - v1.9.2
+# scraper.py - v1.11.0
 import requests
 import pandas as pd
 import os
@@ -145,7 +145,7 @@ def limpar_e_salvar_dados(df_novo):
 # 4. EXECUÇÃO
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.9.2...")
+    print("Iniciando Painel DICOM v1.11.0...")
     df_dados = extrair_noticias()
     limpar_e_salvar_dados(df_dados)
-    print("Processo v1.9.2 finalizado.")
+    print("Processo v1.11.0 finalizado.")
