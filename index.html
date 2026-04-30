@@ -1,10 +1,10 @@
-<!-- index.html - v1.9.0 -->
+<!-- index.html - v1.9.2 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.9.0</title>
+    <title>Painel DICOM | IF Baiano v1.9.2</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,17 +14,16 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--fundo); color: var(--texto); margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        header { text-align: center; margin-bottom: 15px; background: var(--branco); padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-top: 5px solid var(--verde-if); }
+        header { text-align: center; margin-bottom: 15px; background: var(--branco); padding: 30px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-top: 5px solid var(--verde-if); position: relative; }
         .logo-if { height: 110px; margin-bottom: 15px; }
         h1 { color: var(--verde-if); margin: 0; font-size: 26px; }
         p { color: #666; margin-top: 5px; font-size: 15px; }
+        .last-update { font-size: 12px; color: #888; margin-top: 15px; font-weight: 600; background: #f9f9f9; display: inline-block; padding: 5px 15px; border-radius: 20px; border: 1px solid #eee; }
 
-        /* Ticker de Notícias */
         .ticker-wrap { width: 100%; overflow: hidden; background-color: var(--verde-claro); color: var(--verde-if); padding: 8px 0; border-radius: 8px; margin-bottom: 25px; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
         .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 30s linear infinite; font-weight: 600; font-size: 14px; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* Abas Navegação */
         .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--borda); }
         .tab-btn { background: none; border: none; font-size: 15px; font-weight: 600; color: #888; cursor: pointer; padding: 12px 25px; border-radius: 8px 8px 0 0; transition: 0.3s; margin-bottom: -2px; }
         .tab-btn.active { color: var(--verde-if); background: var(--branco); border: 2px solid var(--borda); border-bottom: 2px solid var(--branco); }
@@ -32,7 +31,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Filtros */
         .filtros-container { display: flex; gap: 15px; background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; align-items: flex-end; flex-wrap: wrap; border-left: 4px solid var(--verde-if); }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         .input-group label { font-size: 12px; font-weight: 600; color: #555; }
@@ -42,7 +40,6 @@
         .btn-sec { background-color: #f5f5f5; color: #555; border: 1px solid var(--borda); }
         .btn-sec:hover { background-color: #e0e0e0; }
 
-        /* Cards e Gráficos */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: var(--branco); padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid var(--verde-if); }
         .stat-card h3 { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
@@ -58,7 +55,6 @@
         .status-alert { background: #ffebee; color: var(--vermelho-if); border-color: #ffcdd2; border-left: 4px solid var(--vermelho-if); }
         .status-ok { background: #f1f8f4; color: var(--verde-if); border-color: #c8e6c9; border-left: 4px solid var(--verde-if); }
 
-        /* Tabela */
         .table-box { background: var(--branco); padding: 20px; border-radius: 12px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--borda); }
@@ -78,13 +74,13 @@
         <img src="https://github.com/ascomifbaiano/radar-ifbaiano/blob/main/marca-if-baiano-vertical.png?raw=true" alt="Logo IF Baiano" class="logo-if">
         <h1>📊 Painel DICOM</h1>
         <p>Inteligência de Dados e Monitoramento de Publicações</p>
+        <div class="last-update" id="info-atualizacao">Verificando última sincronização...</div>
     </header>
 
     <div id="status" class="loading">Sincronizando com a base de dados...</div>
 
     <div id="dashboard" style="display:none;">
         
-        <!-- Ticker de Breaking News -->
         <div class="ticker-wrap">
             <div class="ticker" id="ticker-content">Carregando últimas publicações...</div>
         </div>
@@ -102,7 +98,6 @@
             <button class="btn btn-sec" onclick="verTodoHistorico()">Ver Todo Histórico</button>
         </div>
 
-        <!-- Abas Navegação -->
         <div class="tabs-nav">
             <button class="tab-btn active" onclick="abrirAba('aba-metricas', this)">📈 Dashboard Analítico</button>
             <button class="tab-btn" onclick="abrirAba('aba-tabela', this)">📋 Registros do Período</button>
@@ -146,20 +141,42 @@
         </div>
     </div>
 
-    <div class="versao">Painel DICOM v1.9.0 - Ultimate Analytics Edition</div>
+    <div class="versao">Painel DICOM v1.9.2 - Hierarchy Update</div>
 </div>
 
 <script>
-    const csvUrl = 'data/noticias_if.csv';
+    const timestampAgorinha = new Date().getTime();
+    const csvUrl = 'data/noticias_if.csv?v=' + timestampAgorinha;
+
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const mesesAbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const corVerdeIF = '#2F9E41';
     const corVermelhaIF = '#E31B23';
 
-    const stopWords = ['baiano', 'federal', 'sobre', 'para', 'com', 'pelos', 'pelas', 'campus', 'campi', 'instituto', 'processo', 'seletivo', 'curso', 'cursos', 'vagas', 'inscrições', 'edital', 'resultado', 'seleção', 'alunos', 'estudantes', 'entre', 'reitoria', 'unidade', 'IF', 'docentes', 'servidores', 'participa', 'baiana', 'anos'];
+    const stopWords = [
+        'baiano', 'federal', 'sobre', 'para', 'com', 'pelos', 'pelas', 'campus', 'campi', 
+        'instituto', 'processo', 'seletivo', 'curso', 'cursos', 'vagas', 'inscrições', 
+        'edital', 'resultado', 'seleção', 'alunos', 'estudantes', 'entre', 'reitoria', 
+        'unidade', 'docentes', 'servidores', 'participa', 'baiana', 'anos',
+        'alagoinhas', 'lapa', 'bom', 'jesus', 'catu', 'mangabeira', 'guanambi', 
+        'itaberaba', 'itapetinga', 'santa', 'inês', 'ines', 'bonfim', 'serrinha', 
+        'teixeira', 'freitas', 'uruçuca', 'urucuca', 'valença', 'valenca', 'xique-xique', 'xique'
+    ];
 
     let dadosGlobais = [];
     let instanciasGraficos = {}; 
+
+    fetch(csvUrl, { method: 'HEAD' }).then(res => {
+        const lastMod = res.headers.get('Last-Modified');
+        if (lastMod) {
+            const dataExt = new Date(lastMod);
+            document.getElementById('info-atualizacao').innerText = `Última sincronização com o Portal: ${dataExt.toLocaleDateString('pt-BR')} às ${dataExt.toLocaleTimeString('pt-BR')}`;
+        } else {
+            document.getElementById('info-atualizacao').innerText = `Banco de dados sincronizado e atualizado.`;
+        }
+    }).catch(() => {
+        document.getElementById('info-atualizacao').innerText = `Atualização em tempo real ativada.`;
+    });
 
     function abrirAba(idAba, elementoBtn) {
         document.querySelectorAll('.tab-content').forEach(aba => aba.classList.remove('active'));
@@ -175,12 +192,10 @@
             document.getElementById('status').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             
-            // Popula o Ticker de Breaking News
             const ticker = document.getElementById('ticker-content');
-            const ultimasNews = dadosGlobais.slice(0, 5);
+            const ultimasNews = dadosGlobais.slice(0, 6);
             ticker.innerHTML = ultimasNews.map(i => `🚨 <b>${i.campus}:</b> ${i.titulo}`).join(' &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; ');
 
-            // Lógica Smart View: 2 meses como padrão inicial
             const hoje = new Date();
             const doisMesesAtras = new Date();
             doisMesesAtras.setMonth(hoje.getMonth() - 2);
@@ -235,13 +250,11 @@
 
             stats.dias[diasSemana[d.getDay()]] = (stats.dias[diasSemana[d.getDay()]] || 0) + 1;
 
-            // Turnos
             const horaNum = parseInt((item.hora || '12:00').split(':')[0]);
             if (horaNum >= 6 && horaNum < 12) stats.turnos['Manhã (06h-12h)']++;
             else if (horaNum >= 12 && horaNum < 18) stats.turnos['Tarde (12h-18h)']++;
             else stats.turnos['Noite/Madrugada']++;
 
-            // Leitura
             tempoTotalLeitura += parseInt(item.tempo_leitura || 2);
 
             const palavras = item.titulo.toLowerCase().replace(/[.,!?;:()"]/g, '').split(/\s+/);
@@ -252,7 +265,6 @@
             });
         });
 
-        // Cálculo YoY (Year over Year)
         let textoYoY = "N/A";
         if (dataInicioRaw && dataFimRaw) {
             const dI_last = new Date(dataInicioRaw + 'T12:00:00'); dI_last.setFullYear(dI_last.getFullYear() - 1);
@@ -287,15 +299,24 @@
 
         const gridInat = document.getElementById('grid-inatividade');
         gridInat.innerHTML = '';
-        Object.keys(stats.ultimaPost).sort().forEach(c => {
+        
+        // MÁGICA DA ORDENAÇÃO: Reitoria primeiro, resto em ordem alfabética
+        let unidadesTermometro = Object.keys(stats.ultimaPost);
+        unidadesTermometro.sort((a, b) => {
+            if (a === 'Reitoria') return -1;
+            if (b === 'Reitoria') return 1;
+            return a.localeCompare(b);
+        });
+
+        unidadesTermometro.forEach(c => {
             const diff = Math.floor((agora - stats.ultimaPost[c]) / (1000 * 60 * 60 * 24));
             const div = document.createElement('div');
             div.className = `unit-status ${diff > 15 ? 'status-alert' : 'status-ok'}`;
-            div.innerHTML = `<span>${c}</span> <strong>${diff}d</strong>`;
+            // Destaque visual em negrito para a Reitoria
+            div.innerHTML = `<span>${c === 'Reitoria' ? '<strong>Reitoria</strong>' : c}</span> <strong>${diff}d</strong>`;
             gridInat.appendChild(div);
         });
 
-        // Tabela populada na Aba 2
         const tbody = document.getElementById('tabela-corpo');
         tbody.innerHTML = '';
         dados.forEach(item => {
@@ -339,7 +360,6 @@
             options: { plugins: { title: { display: true, text: 'Top 5 Temas de Maior Destaque' } } }
         });
 
-        // Gráfico de Turnos (Produtividade)
         recriarGrafico('chartTurnos', {
             type: 'pie',
             data: { labels: Object.keys(stats.turnos), datasets: [{ data: Object.values(stats.turnos), backgroundColor: ['#fdd835', '#ff9800', '#3949ab'] }] },
