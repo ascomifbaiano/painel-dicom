@@ -1,9 +1,9 @@
-# update_data.yml - v1.11.0
+# update_data.yml - v1.12.0
 name: Automação do Painel DICOM
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Executa a cada 30 minutos
+    - cron: '*/30 * * * *' 
   workflow_dispatch: 
 
 jobs:
@@ -29,5 +29,5 @@ jobs:
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Novas Métricas Avançadas (Painel v1.11.0)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Remoção Nuvem de Palavras (Painel v1.12.0)"
           git push
