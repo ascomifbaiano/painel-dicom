@@ -1,12 +1,13 @@
-# scraper.py - v1.7.0
+# scraper.py - v1.9.0
 import requests
 import pandas as pd
 import os
 import html
 import urllib3
+import json 
+import re
 from datetime import datetime
 
-# Desativa avisos de segurança SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ==========================================
@@ -14,7 +15,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ==========================================
 ARQUIVO_CSV = 'data/noticias_if.csv'
 
-# Lógica Dinâmica: Pega sempre do dia 01/01 de dois anos atrás
 ANO_ATUAL = datetime.now().year
 ANO_LIMITE = ANO_ATUAL - 2
 DATA_LIMITE = f"{ANO_LIMITE}-01-01"
@@ -22,25 +22,25 @@ DATA_LIMITE = f"{ANO_LIMITE}-01-01"
 print(f"-> Ano Atual: {ANO_ATUAL} | Limite de Retenção: {DATA_LIMITE}")
 
 UNIDADES = [
-    { "id": "Reitoria", "url": "https://www.ifbaiano.edu.br/portal/wp-json/wp/v2/posts" },
-    { "id": "Alagoinhas", "url": "https://www.ifbaiano.edu.br/unidades/alagoinhas/wp-json/wp/v2/posts" },
-    { "id": "Lapa", "url": "https://www.ifbaiano.edu.br/unidades/lapa/wp-json/wp/v2/posts" },
-    { "id": "Catu", "url": "https://www.ifbaiano.edu.br/unidades/catu/wp-json/wp/v2/posts" },
-    { "id": "Mangabeira", "url": "https://www.ifbaiano.edu.br/unidades/gmb/wp-json/wp/v2/posts" },
-    { "id": "Guanambi", "url": "https://www.ifbaiano.edu.br/unidades/guanambi/wp-json/wp/v2/posts" },
-    { "id": "Itaberaba", "url": "https://www.ifbaiano.edu.br/unidades/itaberaba/wp-json/wp/v2/posts" },
-    { "id": "Itapetinga", "url": "https://www.ifbaiano.edu.br/unidades/itapetinga/wp-json/wp/v2/posts" },
-    { "id": "Santa Inês", "url": "https://www.ifbaiano.edu.br/unidades/santaines/wp-json/wp/v2/posts" },
-    { "id": "Bonfim", "url": "https://www.ifbaiano.edu.br/unidades/bonfim/wp-json/wp/v2/posts" },
-    { "id": "Serrinha", "url": "https://www.ifbaiano.edu.br/unidades/serrinha/wp-json/wp/v2/posts" },
-    { "id": "Teixeira", "url": "https://www.ifbaiano.edu.br/unidades/teixeira/wp-json/wp/v2/posts" },
-    { "id": "Uruçuca", "url": "https://www.ifbaiano.edu.br/unidades/urucuca/wp-json/wp/v2/posts" },
-    { "id": "Valença", "url": "https://www.ifbaiano.edu.br/unidades/valenca/wp-json/wp/v2/posts" },
-    { "id": "Xique-Xique", "url": "https://www.ifbaiano.edu.br/unidades/xique-xique/wp-json/wp/v2/posts" }
+    { "id": "Reitoria", "url": "https://www.ifbaiano.edu.br/portal/wp-json/wp/v2/posts/" },
+    { "id": "Alagoinhas", "url": "https://www.ifbaiano.edu.br/unidades/alagoinhas/wp-json/wp/v2/posts/" },
+    { "id": "Lapa", "url": "https://www.ifbaiano.edu.br/unidades/lapa/wp-json/wp/v2/posts/" },
+    { "id": "Catu", "url": "https://www.ifbaiano.edu.br/unidades/catu/wp-json/wp/v2/posts/" },
+    { "id": "Mangabeira", "url": "https://www.ifbaiano.edu.br/unidades/gmb/wp-json/wp/v2/posts/" },
+    { "id": "Guanambi", "url": "https://www.ifbaiano.edu.br/unidades/guanambi/wp-json/wp/v2/posts/" },
+    { "id": "Itaberaba", "url": "https://www.ifbaiano.edu.br/unidades/itaberaba/wp-json/wp/v2/posts/" },
+    { "id": "Itapetinga", "url": "https://www.ifbaiano.edu.br/unidades/itapetinga/wp-json/wp/v2/posts/" },
+    { "id": "Santa Inês", "url": "https://www.ifbaiano.edu.br/unidades/santaines/wp-json/wp/v2/posts/" },
+    { "id": "Bonfim", "url": "https://www.ifbaiano.edu.br/unidades/bonfim/wp-json/wp/v2/posts/" },
+    { "id": "Serrinha", "url": "https://www.ifbaiano.edu.br/unidades/serrinha/wp-json/wp/v2/posts/" },
+    { "id": "Teixeira", "url": "https://www.ifbaiano.edu.br/unidades/teixeira/wp-json/wp/v2/posts/" },
+    { "id": "Uruçuca", "url": "https://www.ifbaiano.edu.br/unidades/urucuca/wp-json/wp/v2/posts/" },
+    { "id": "Valença", "url": "https://www.ifbaiano.edu.br/unidades/valenca/wp-json/wp/v2/posts/" },
+    { "id": "Xique-Xique", "url": "https://www.ifbaiano.edu.br/unidades/xique-xique/wp-json/wp/v2/posts/" }
 ]
 
 # ==========================================
-# 2. EXTRAÇÃO COM TRAVA TEMPORAL
+# 2. EXTRAÇÃO DE DADOS PROFUNDOS
 # ==========================================
 def extrair_noticias():
     noticias_coletadas = []
@@ -56,37 +56,52 @@ def extrair_noticias():
 
         while not limite_atingido:
             try:
-                url_limpa = unidade['url'].rstrip('/')
-                url = f"{url_limpa}?per_page=100&page={pagina}"
-                
+                url = f"{unidade['url']}?per_page=100&page={pagina}"
                 response = requests.get(url, headers=headers, timeout=30, verify=False)
                 
                 if response.status_code != 200:
+                    print(f"   X Erro de Servidor: Status {response.status_code}")
                     break
                     
-                posts = response.json()
+                raw_data = response.content.decode('utf-8-sig')
+                posts = json.loads(raw_data)
+                
                 if not posts or not isinstance(posts, list):
                     break 
 
                 for post in posts:
-                    data_limpa = post.get('date', '').split('T')[0]
+                    data_bruta = post.get('date', '')
+                    data_limpa = data_bruta.split('T')[0]
+                    hora_limpa = data_bruta.split('T')[1][:5] if 'T' in data_bruta else '12:00'
                     
                     if data_limpa < DATA_LIMITE:
                         limite_atingido = True
                         break
 
                     titulo_limpo = html.unescape(post.get('title', {}).get('rendered', 'Sem Título'))
+                    
+                    # Cálculo do Tempo de Leitura (250 palavras por minuto)
+                    conteudo_html = post.get('content', {}).get('rendered', '')
+                    texto_limpo = re.sub(r'<[^>]+>', ' ', conteudo_html)
+                    qtd_palavras = len(texto_limpo.split())
+                    tempo_leitura = max(1, round(qtd_palavras / 250))
+
                     noticias_coletadas.append({
                         'campus': unidade['id'],
                         'titulo': titulo_limpo,
                         'link': post.get('link', ''),
-                        'data': data_limpa
+                        'data': data_limpa,
+                        'hora': hora_limpa,
+                        'tempo_leitura': tempo_leitura
                     })
                 
                 if not limite_atingido:
                     print(f"   ✓ Página {pagina} processada.")
                     pagina += 1
                     
+            except json.JSONDecodeError as e:
+                print(f"   X Falha ao decodificar JSON em {unidade['id']}: {e}")
+                break
             except Exception as e:
                 print(f"   X Falha na rota de {unidade['id']}: {e}")
                 break 
@@ -97,12 +112,12 @@ def extrair_noticias():
     return pd.DataFrame(noticias_coletadas)
 
 # ==========================================
-# 3. SALVAMENTO E PURGA (LIMPEZA DE DADOS VELHOS)
+# 3. SALVAMENTO E PURGA
 # ==========================================
 def limpar_e_salvar_dados(df_novo):
     if df_novo.empty:
-        print("Nenhum dado novo retornado.")
-        df_novo = pd.DataFrame(columns=['campus', 'titulo', 'link', 'data']) # Garante estrutura se vazio
+        print("Nenhum dado novo retornado pelas APIs hoje.")
+        df_novo = pd.DataFrame(columns=['campus', 'titulo', 'link', 'data', 'hora', 'tempo_leitura']) 
 
     df_novo = df_novo.dropna(subset=['data'])
     os.makedirs(os.path.dirname(ARQUIVO_CSV), exist_ok=True)
@@ -116,7 +131,6 @@ def limpar_e_salvar_dados(df_novo):
         print("Criando primeiro banco de dados...")
         df_final = df_novo
 
-    # A MÁGICA ACONTECE AQUI: Deleta todas as notícias anteriores à DATA_LIMITE
     total_antes = len(df_final)
     df_final = df_final[df_final['data'] >= DATA_LIMITE]
     total_removido = total_antes - len(df_final)
@@ -132,7 +146,7 @@ def limpar_e_salvar_dados(df_novo):
 # 4. EXECUÇÃO
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.7.0 (Rolling Window)...")
+    print("Iniciando Painel DICOM v1.9.0 (Ultimate Analytics)...")
     df_dados = extrair_noticias()
     limpar_e_salvar_dados(df_dados)
-    print("Processo v1.7.0 finalizado.")
+    print("Processo v1.9.0 finalizado.")
