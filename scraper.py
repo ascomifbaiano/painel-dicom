@@ -1,4 +1,4 @@
-# scraper.py - v1.9.0
+# scraper.py - v1.9.2
 import requests
 import pandas as pd
 import os
@@ -80,7 +80,6 @@ def extrair_noticias():
 
                     titulo_limpo = html.unescape(post.get('title', {}).get('rendered', 'Sem Título'))
                     
-                    # Cálculo do Tempo de Leitura (250 palavras por minuto)
                     conteudo_html = post.get('content', {}).get('rendered', '')
                     texto_limpo = re.sub(r'<[^>]+>', ' ', conteudo_html)
                     qtd_palavras = len(texto_limpo.split())
@@ -136,9 +135,9 @@ def limpar_e_salvar_dados(df_novo):
     total_removido = total_antes - len(df_final)
     
     if total_removido > 0:
-        print(f"🧹 Purga Automática: {total_removido} notícias anteriores a {DATA_LIMITE} foram apagadas.")
+        print(f"🧹 Purga Automática: {total_removido} notícias anteriores a {DATA_LIMITE} apagadas.")
 
-    df_final = df_final.sort_values(by='data', ascending=False)
+    df_final = df_final.sort_values(by=['data', 'hora'], ascending=[False, False])
     df_final.to_csv(ARQUIVO_CSV, index=False, encoding='utf-8')
     print(f"Sucesso! Total consolidado: {len(df_final)} notícias retidas.")
 
@@ -146,7 +145,7 @@ def limpar_e_salvar_dados(df_novo):
 # 4. EXECUÇÃO
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.9.0 (Ultimate Analytics)...")
+    print("Iniciando Painel DICOM v1.9.2...")
     df_dados = extrair_noticias()
     limpar_e_salvar_dados(df_dados)
-    print("Processo v1.9.0 finalizado.")
+    print("Processo v1.9.2 finalizado.")
