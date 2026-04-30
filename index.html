@@ -1,10 +1,10 @@
-<!-- index.html - v1.9.2 -->
+<!-- index.html - v1.11.0 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.9.2</title>
+    <title>Painel DICOM | IF Baiano v1.11.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -60,6 +60,10 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--borda); }
         th { background: #f8f9fa; color: #555; font-weight: 600; }
         .tag { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background: var(--verde-claro); color: var(--verde-if); }
+        .tag-tipo { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #e0f7fa; color: #006064; text-transform: uppercase; margin-bottom: 5px; display: inline-block; }
+        .tag-evento { background: #fff3e0; color: #e65100; }
+        .tag-inst { background: #f3e5f5; color: #4a148c; }
+        
         .link-btn { color: var(--verde-if); text-decoration: none; font-weight: 600; }
         .link-btn:hover { text-decoration: underline; color: var(--vermelho-if); }
 
@@ -123,6 +127,12 @@
                 <div class="chart-box"><canvas id="chartEvolucao"></canvas></div>
             </div>
 
+            <!-- NOVA FILEIRA: Categorias e Pacing -->
+            <div class="charts-main-grid">
+                <div class="chart-box"><canvas id="chartCategorias"></canvas></div>
+                <div class="chart-box"><canvas id="chartPacing"></canvas></div>
+            </div>
+
             <div class="charts-main-grid">
                 <div class="chart-box"><canvas id="chartTemas"></canvas></div>
                 <div class="chart-box"><canvas id="chartTurnos"></canvas></div>
@@ -132,16 +142,16 @@
         <!-- ABA 2: TABELA DE REGISTROS -->
         <div id="aba-tabela" class="tab-content">
             <div class="table-box">
-                <h3 style="margin-top:0; color: var(--texto);">Listagem Detalhada</h3>
+                <h3 style="margin-top:0; color: var(--texto);">Listagem Detalhada e Categorizada</h3>
                 <table>
-                    <thead><tr><th>Data/Hora</th><th>Unidade</th><th>Título</th><th>Leitura</th><th>Ação</th></tr></thead>
+                    <thead><tr><th>Data/Hora</th><th>Unidade</th><th>Notícia & Categoria</th><th>Ação</th></tr></thead>
                     <tbody id="tabela-corpo"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <div class="versao">Painel DICOM v1.9.2 - Hierarchy Update</div>
+    <div class="versao">Painel DICOM v1.11.0 - Advanced Metrics Edition</div>
 </div>
 
 <script>
@@ -155,9 +165,11 @@
 
     const stopWords = [
         'baiano', 'federal', 'sobre', 'para', 'com', 'pelos', 'pelas', 'campus', 'campi', 
-        'instituto', 'processo', 'seletivo', 'curso', 'cursos', 'vagas', 'inscrições', 
-        'edital', 'resultado', 'seleção', 'alunos', 'estudantes', 'entre', 'reitoria', 
-        'unidade', 'docentes', 'servidores', 'participa', 'baiana', 'anos',
+        'instituto', 'alunos', 'estudantes', 'entre', 'reitoria', 'unidade', 'docentes', 
+        'servidores', 'participa', 'baiana', 'anos', 'neste', 'nesta', 'este', 'esta',
+        'mais', 'como', 'suas', 'seus', 'quando', 'onde', 'quem', 'aqui', 'após',
+        '2024', '2025', '2026', '2027', 'janeiro', 'fevereiro', 'março', 'abril', 
+        'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
         'alagoinhas', 'lapa', 'bom', 'jesus', 'catu', 'mangabeira', 'guanambi', 
         'itaberaba', 'itapetinga', 'santa', 'inês', 'ines', 'bonfim', 'serrinha', 
         'teixeira', 'freitas', 'uruçuca', 'urucuca', 'valença', 'valenca', 'xique-xique', 'xique'
@@ -226,9 +238,25 @@
         processarDados(dadosGlobais, null, null);
     }
 
+    function classificarNoticia(titulo) {
+        const t = titulo.toLowerCase();
+        if (t.includes('edital') || t.includes('vaga') || t.includes('seleção') || t.includes('inscrição') || t.includes('processo seletivo') || t.includes('sisu')) {
+            return { nome: 'Oportunidades & Editais', classe: '' };
+        } else if (t.includes('evento') || t.includes('palestra') || t.includes('semana') || t.includes('congresso') || t.includes('seminário')) {
+            return { nome: 'Eventos', classe: 'tag-evento' };
+        } else {
+            return { nome: 'Institucional', classe: 'tag-inst' };
+        }
+    }
+
     function processarDados(dados, dataInicioRaw, dataFimRaw) {
         const agora = new Date();
-        const stats = { volume: {}, meses: {}, dias: {}, temas: {}, ultimaPost: {}, turnos: { 'Manhã (06h-12h)': 0, 'Tarde (12h-18h)': 0, 'Noite/Madrugada': 0 } };
+        const stats = { 
+            volume: {}, meses: {}, dias: {}, temas: {}, ultimaPost: {}, 
+            turnos: { 'Manhã (06h-12h)': 0, 'Tarde (12h-18h)': 0, 'Noite/Madrugada': 0 },
+            categorias: { 'Oportunidades & Editais': 0, 'Eventos': 0, 'Institucional': 0 },
+            pacingData: {} 
+        };
         let tempoTotalLeitura = 0;
 
         dadosGlobais.forEach(item => {
@@ -257,6 +285,14 @@
 
             tempoTotalLeitura += parseInt(item.tempo_leitura || 2);
 
+            // Nova Métrica: Categorização
+            const cat = classificarNoticia(item.titulo).nome;
+            stats.categorias[cat]++;
+
+            // Preparação para Ritmo de Publicação (Pacing)
+            if (!stats.pacingData[item.campus]) stats.pacingData[item.campus] = [];
+            stats.pacingData[item.campus].push(d);
+
             const palavras = item.titulo.toLowerCase().replace(/[.,!?;:()"]/g, '').split(/\s+/);
             palavras.forEach(p => {
                 if (p.length > 3 && !stopWords.includes(p)) {
@@ -264,6 +300,22 @@
                 }
             });
         });
+
+        // Cálculo do Pacing (Média de Dias entre Posts)
+        const ritmoCampus = {};
+        for (let campus in stats.pacingData) {
+            let datas = stats.pacingData[campus].sort((a, b) => b - a);
+            if (datas.length > 1) {
+                let diffTotal = 0;
+                for (let i = 0; i < datas.length - 1; i++) {
+                    diffTotal += (datas[i] - datas[i+1]) / (1000 * 60 * 60 * 24);
+                }
+                ritmoCampus[campus] = Math.round(diffTotal / (datas.length - 1));
+            } else {
+                ritmoCampus[campus] = 0; 
+            }
+        }
+        stats.ritmo = ritmoCampus;
 
         let textoYoY = "N/A";
         if (dataInicioRaw && dataFimRaw) {
@@ -300,7 +352,6 @@
         const gridInat = document.getElementById('grid-inatividade');
         gridInat.innerHTML = '';
         
-        // MÁGICA DA ORDENAÇÃO: Reitoria primeiro, resto em ordem alfabética
         let unidadesTermometro = Object.keys(stats.ultimaPost);
         unidadesTermometro.sort((a, b) => {
             if (a === 'Reitoria') return -1;
@@ -312,7 +363,6 @@
             const diff = Math.floor((agora - stats.ultimaPost[c]) / (1000 * 60 * 60 * 24));
             const div = document.createElement('div');
             div.className = `unit-status ${diff > 15 ? 'status-alert' : 'status-ok'}`;
-            // Destaque visual em negrito para a Reitoria
             div.innerHTML = `<span>${c === 'Reitoria' ? '<strong>Reitoria</strong>' : c}</span> <strong>${diff}d</strong>`;
             gridInat.appendChild(div);
         });
@@ -325,8 +375,18 @@
             const hora = item.hora || '--:--';
             const minLeitura = item.tempo_leitura || '2';
             
+            const categoria = classificarNoticia(item.titulo);
+            
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${dataBR} <span style="color:#999; font-size:11px;">${hora}</span></td><td><span class="tag">${item.campus}</span></td><td>${item.titulo}</td><td style="color:#666;">⏳ ${minLeitura}m</td><td><a href="${item.link}" target="_blank" class="link-btn">Acessar</a></td>`;
+            tr.innerHTML = `
+                <td>${dataBR} <br><span style="color:#999; font-size:11px;">${hora}</span></td>
+                <td><span class="tag">${item.campus}</span></td>
+                <td>
+                    <span class="tag-tipo ${categoria.classe}">${categoria.nome}</span><br>
+                    ${item.titulo} <span style="color:#aaa; font-size:11px;">(⏳ ${minLeitura}m)</span>
+                </td>
+                <td><a href="${item.link}" target="_blank" class="link-btn">Acessar</a></td>
+            `;
             tbody.appendChild(tr);
         });
 
@@ -353,17 +413,35 @@
             options: { plugins: { title: { display: true, text: 'Evolução Temporal' }, legend: {display: false} }, scales: { y: { beginAtZero: true } } }
         });
 
+        // Novo Gráfico 1: Radar de Categorias
+        recriarGrafico('chartCategorias', {
+            type: 'doughnut',
+            data: { 
+                labels: Object.keys(stats.categorias), 
+                datasets: [{ data: Object.values(stats.categorias), backgroundColor: ['#29b6f6', '#ffa726', '#ab47bc'] }] 
+            },
+            options: { plugins: { title: { display: true, text: 'Classificação do Conteúdo' } } }
+        });
+
+        // Novo Gráfico 2: Ritmo de Publicação (Barras Horizontais)
+        const campiPacing = Object.keys(stats.ritmo).filter(c => stats.ritmo[c] > 0).sort((a, b) => stats.ritmo[a] - stats.ritmo[b]);
+        recriarGrafico('chartPacing', {
+            type: 'bar',
+            data: { labels: campiPacing, datasets: [{ label: 'Dias (Média)', data: campiPacing.map(c => stats.ritmo[c]), backgroundColor: '#81c784', borderRadius: 4 }] },
+            options: { indexAxis: 'y', plugins: { title: { display: true, text: 'Ritmo: Média de Dias entre Posts' }, legend: {display: false} } }
+        });
+
         const top5 = topTemaArr.slice(0, 5);
         recriarGrafico('chartTemas', {
             type: 'doughnut',
             data: { labels: top5, datasets: [{ data: top5.map(t => stats.temas[t]), backgroundColor: [corVerdeIF, '#45a555', '#5ebc6d', corVermelhaIF, '#e84d52'] }] },
-            options: { plugins: { title: { display: true, text: 'Top 5 Temas de Maior Destaque' } } }
+            options: { plugins: { title: { display: true, text: 'Top 5 Palavras Mais Frequentes' } } }
         });
 
         recriarGrafico('chartTurnos', {
             type: 'pie',
             data: { labels: Object.keys(stats.turnos), datasets: [{ data: Object.values(stats.turnos), backgroundColor: ['#fdd835', '#ff9800', '#3949ab'] }] },
-            options: { plugins: { title: { display: true, text: 'Relógio de Produtividade (Horário das Postagens)' } } }
+            options: { plugins: { title: { display: true, text: 'Relógio de Produtividade (Horário)' } } }
         });
     }
 </script>
