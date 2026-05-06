@@ -11,8 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Plugin para fixar os números nos gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <!-- Plugin para exportar em PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
         :root { --verde-if: #2F9E41; --vermelho-if: #E31B23; --verde-claro: #e8f5e9; --fundo: #f4f6f8; --branco: #ffffff; --texto: #333333; --borda: #e0e0e0; }
@@ -51,12 +49,12 @@
         .btn-pdf:hover { background-color: #0d47a1; }
 
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: var(--branco); padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid var(--verde-if); }
+        .stat-card { background: var(--branco); padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid var(--verde-if); page-break-inside: avoid; break-inside: avoid; }
         .stat-card h3 { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
         .stat-card .valor { font-size: 22px; font-weight: 700; color: var(--texto); }
 
         .charts-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .chart-box { background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
+        .chart-box { background: var(--branco); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; page-break-inside: avoid; break-inside: avoid; }
         .chart-header-custom { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .chart-header-custom h3 { margin: 0; font-size: 15px; color: #444; }
         .chart-header-custom select { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--borda); font-family: inherit; font-size: 13px; outline: none; background: #fdfdfd; cursor: pointer; }
@@ -64,7 +62,7 @@
         .chart-container { position: relative; height: 320px; width: 100%; }
         @media (max-width: 800px) { .charts-main-grid { grid-template-columns: 1fr; } }
 
-        .inactivity-list { background: var(--branco); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .inactivity-list { background: var(--branco); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); page-break-inside: avoid; break-inside: avoid; }
         .inactivity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
         .unit-status { padding: 10px; border-radius: 6px; border: 1px solid var(--borda); font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
         .status-alert { background: #ffebee; color: var(--vermelho-if); border-color: #ffcdd2; border-left: 4px solid var(--vermelho-if); }
@@ -83,6 +81,33 @@
 
         .loading { text-align: center; font-style: italic; color: #888; margin-top: 40px; }
         .versao { text-align: center; margin-top: 30px; font-size: 12px; color: #888; }
+        
+        /* Estilos de Impressão */
+        @media print {
+            body { background-color: var(--branco); padding: 0; }
+            .container { max-width: 100%; width: 100%; margin: 0; }
+            
+            /* Ocultar elementos desnecessários na impressão */
+            .ticker-wrap, .tabs-nav, .filtros-container, .btn, .btn-pdf, .loading, .versao {
+                display: none !important;
+            }
+            
+            header { box-shadow: none; border: none; padding: 10px 0; margin-bottom: 20px; border-bottom: 2px solid var(--borda); }
+            .info-badges { display: none; } /* Opcional: esconder badges no cabeçalho */
+            
+            /* Remover sombras e fundos dos cards para economizar tinta e melhorar legibilidade */
+            .stat-card, .chart-box, .inactivity-list, .table-box {
+                box-shadow: none;
+                border: 1px solid var(--borda);
+            }
+            
+            /* Garantir que os gráficos de barras/pizza apareçam com cores na impressão */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            /* Mostrar apenas a aba ativa (ou forçar a métricas) */
+            .tab-content { display: none !important; }
+            .tab-content.active { display: block !important; }
+        }
     </style>
 </head>
 <body>
@@ -121,7 +146,7 @@
                 <button class="btn btn-sec" onclick="verTodoHistorico()">Ver Tudo</button>
             </div>
             <div>
-                <button class="btn btn-pdf" onclick="baixarRelatorio()">📥 Baixar Relatório (PDF)</button>
+                <button class="btn btn-pdf" onclick="baixarRelatorio()">🖨️ Imprimir / Salvar PDF</button>
             </div>
         </div>
 
@@ -212,44 +237,9 @@
     let dadosFiltradosAtuais = [];
     let instanciasGraficos = {}; 
 
-// Função de Download do PDF (Corrigida contra cortes)
+// Função de Download do PDF (Agora via Impressão Nativa)
     function baixarRelatorio() {
-        // 1. Garantir que a aba de métricas esteja ativa (html2pdf não funciona bem com elementos ocultos)
-        const abaMetricas = document.getElementById('aba-metricas');
-        if (!abaMetricas.classList.contains('active')) {
-            const btnMetricas = document.querySelector('.tab-btn'); // Primeiro botão é o de métricas
-            abrirAba('aba-metricas', btnMetricas);
-        }
-
-        const elemento = document.getElementById('area-pdf');
-        
-        // 2. Configurações otimizadas
-        const opt = {
-            margin:       [0.4, 0.4, 0.4, 0.4], // Margens: [top, left, bottom, right] em polegadas
-            filename:     'Relatorio_Portais_DICOM.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { 
-                scale: 2, 
-                useCORS: true, 
-                scrollY: 0,             // Resolve o problema de corte se a página estiver scrollada
-                windowWidth: 1200,      // Simula um navegador de 1200px
-                width: 1200             // Garante a largura do canvas
-            },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
-            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        // 3. Estilo temporário para garantir o layout correto no PDF
-        const estiloOriginal = elemento.style.cssText;
-        elemento.style.width = '1200px';
-        elemento.style.background = 'white';
-        elemento.style.padding = '10px';
-
-        // 4. Gerar o PDF
-        html2pdf().set(opt).from(elemento).save().then(() => {
-            // Restaurar o estilo original
-            elemento.style.cssText = estiloOriginal;
-        });
+        window.print();
     }
     fetch(csvUrl, { method: 'HEAD' }).then(res => {
         const lastMod = res.headers.get('Last-Modified');
