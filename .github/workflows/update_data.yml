@@ -1,9 +1,9 @@
-# update_data.yml - v1.14.0
+# update_data.yml - v1.16.0
 name: Automação do Painel DICOM
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Executa a cada 30 minutos
+    - cron: '*/30 * * * *' 
   workflow_dispatch: 
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
       - name: 3. Instalar dependências
         run: pip install -r requirements.txt
 
-      - name: 4. Executar Motor do Painel
+      - name: 4. Executar Motor do Painel e Clipping
         run: python scraper.py
 
       - name: 5. Salvar dados de forma incremental
@@ -29,5 +29,5 @@ jobs:
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Carga Incremental Super Rápida (Painel v1.14.0)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Clipping de Mídia Ativado (Painel v1.16.0)"
           git push
