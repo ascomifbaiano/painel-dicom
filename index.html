@@ -1,10 +1,10 @@
-<!-- index.html - v1.16.0 -->
+<!-- index.html - v1.17.0 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.16.0</title>
+    <title>Painel DICOM | IF Baiano v1.17.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -83,7 +83,6 @@
         .versao { text-align: center; margin-top: 30px; font-size: 12px; color: #888; }
         .loading { text-align: center; font-style: italic; color: #888; margin-top: 40px; }
         
-        /* Botões de Ano (Clipping) */
         .year-filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;}
         .btn-year { background: #fff; border: 1px solid var(--borda); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 600; color: #555; transition: 0.2s; }
         .btn-year.active { background: var(--verde-if); color: #fff; border-color: var(--verde-if); }
@@ -175,7 +174,7 @@
         <!-- ABA 3: CLIPPING NA MÍDIA -->
         <div id="aba-clipping" class="tab-content">
             <div class="table-box">
-                <h3 style="margin-top:0; margin-bottom:10px; color: var(--texto);">Pesquisar na Mídia (Google News & Histórico)</h3>
+                <h3 style="margin-top:0; margin-bottom:10px; color: var(--texto);">Pesquisar na Mídia (Google News, Bing News & Histórico)</h3>
                 
                 <div class="year-filters" id="clipping-years-container">
                     <!-- Botões de ano injetados via JS -->
@@ -192,7 +191,7 @@
 
     </div>
 
-    <div class="versao">Painel DICOM v1.16.0 - Media Clipping Edition</div>
+    <div class="versao">Painel DICOM v1.17.0 - Multi-Engine Clipping Edition</div>
 </div>
 
 <script>
@@ -265,7 +264,6 @@
                 aplicarFiltros();
             }
             
-            // Inicia o carregamento do Clipping
             carregarClipping();
         }
     });
@@ -276,7 +274,6 @@
             download: true, header: true, skipEmptyLines: true,
             complete: function(res) {
                 dadosClipping = res.data;
-                // Extrair anos únicos para criar os botões
                 const anos = [...new Set(dadosClipping.map(i => i.data.split('-')[0]))].sort().reverse();
                 
                 const btnContainer = document.getElementById('clipping-years-container');
@@ -287,7 +284,6 @@
                     }
                 });
                 
-                // Renderiza inicial
                 renderizarTabelaClipping();
             },
             error: function() {
@@ -299,7 +295,6 @@
     // FUNÇÕES DO CLIPPING
     window.filtrarClipping = function(ano, btnElement) {
         anoAtualClipping = ano;
-        // Atualiza botões
         document.querySelectorAll('.btn-year').forEach(btn => btn.classList.remove('active'));
         btnElement.classList.add('active');
         renderizarTabelaClipping();
@@ -443,7 +438,7 @@
         recriarGrafico('chartPacing', {
             type: 'bar',
             data: { labels: labels, datasets: [{ label: 'Dias (Média)', data: data, backgroundColor: '#81c784', borderRadius: 4 }] },
-            options: { plugins: { legend: {display: false} }, scales: { y: { beginAtZero: true } } }
+            options: { indexAxis: 'y', plugins: { legend: {display: false} }, scales: { x: { beginAtZero: true } } }
         });
     }
 
