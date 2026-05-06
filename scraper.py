@@ -1,4 +1,4 @@
-# scraper.py - v1.17.0
+# scraper.py - v1.18.0
 import requests
 import pandas as pd
 import os
@@ -98,16 +98,23 @@ def limpar_e_salvar_dados(df_novo):
     print(f"Rede Interna consolidada: {len(df_final)} registros.")
 
 # ==========================================
-# 3. MOTOR 2: GOOGLE + BING NEWS CLIPPING
+# 3. MOTOR 2: CLIPPING CONTÍNUO (MÍDIA EXTERNA)
 # ==========================================
 def extrair_clipping():
     print("\nBuscando IF Baiano na Mídia Externa (Multi-Engine)...")
     clipping_coletado = []
     
-    df_existente = pd.read_csv(ARQUIVO_CLIPPING) if os.path.exists(ARQUIVO_CLIPPING) else pd.DataFrame()
-    links_conhecidos = set(df_existente['link'].dropna().tolist()) if not df_existente.empty else set()
+    # Tratamento de erro na leitura do CSV manual do usuário (ignora linhas quebradas pelo Excel)
+    if os.path.exists(ARQUIVO_CLIPPING):
+        try:
+            df_existente = pd.read_csv(ARQUIVO_CLIPPING, on_bad_lines='skip')
+            links_conhecidos = set(df_existente['link'].dropna().tolist())
+        except:
+            print("Aviso: Falha ao ler clipping.csv atual. Criando nova base.")
+            links_conhecidos = set()
+    else:
+        links_conhecidos = set()
 
-    # Fontes RSS de Pesquisa
     fontes_pesquisa = [
         ("Google News", 'https://news.google.com/rss/search?q="IF+Baiano"&hl=pt-BR&gl=BR&ceid=BR:pt-419'),
         ("Bing News", 'https://www.bing.com/news/search?q="IF+Baiano"&format=rss')
@@ -116,7 +123,6 @@ def extrair_clipping():
     for nome_motor, url_rss in fontes_pesquisa:
         print(f" -> Varrendo {nome_motor}...")
         try:
-            # Fake User-Agent vital para o Bing não bloquear a leitura
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'}
             response = requests.get(url_rss, headers=headers, timeout=30)
             root = ET.fromstring(response.content)
@@ -124,14 +130,13 @@ def extrair_clipping():
             for item in root.findall('./channel/item'):
                 link = item.find('link').text
                 
-                # Ignora se já estiver no banco ou se foi coletado pelo motor anterior agora mesmo
+                # A MÁGICA INCREMENTAL: Se o link já está no CSV manual ou foi lido agora, pula!
                 if link in links_conhecidos:
                     continue 
                     
                 titulo_completo = item.find('title').text if item.find('title') is not None else 'Sem Título'
                 veiculo = "Mídia Externa"
                 
-                # Inteligência para extrair o nome do Veículo do RSS (Tag Source ou Título)
                 source_tag = item.find('source')
                 if source_tag is not None and source_tag.text:
                     veiculo = html.unescape(source_tag.text)
@@ -146,7 +151,6 @@ def extrair_clipping():
                     else:
                         titulo = html.unescape(titulo_completo)
 
-                # Tratamento de Data
                 data_pub_rss = item.find('pubDate').text
                 try:
                     data_formatada = parsedate_to_datetime(data_pub_rss).strftime('%Y-%m-%d')
@@ -160,7 +164,6 @@ def extrair_clipping():
                     'link': link
                 })
                 
-                # Adiciona ao set para o Bing não repetir o que o Google achou no mesmo segundo
                 links_conhecidos.add(link) 
                 
         except Exception as e:
@@ -175,24 +178,28 @@ def salvar_clipping(df_novo):
         
     os.makedirs(os.path.dirname(ARQUIVO_CLIPPING), exist_ok=True)
     if os.path.exists(ARQUIVO_CLIPPING):
-        print(f"Adicionando {len(df_novo)} novas menções ao Clipping...")
-        df_final = pd.concat([df_novo, pd.read_csv(ARQUIVO_CLIPPING)], ignore_index=True).drop_duplicates(subset=['link'], keep='first')
+        print(f"Adicionando {len(df_novo)} novas publicações ao Acervo Memorial de Clipping...")
+        try:
+            df_existente = pd.read_csv(ARQUIVO_CLIPPING, on_bad_lines='skip')
+            df_final = pd.concat([df_novo, df_existente], ignore_index=True).drop_duplicates(subset=['link'], keep='first')
+        except:
+            df_final = df_novo
     else:
         df_final = df_novo
 
+    # Ordena as notícias sempre pela data mais recente
     df_final.sort_values(by=['data'], ascending=[False]).to_csv(ARQUIVO_CLIPPING, index=False, encoding='utf-8')
-    print(f"Clipping consolidado: {len(df_final)} registros totais na base.")
-
+    print(f"Acervo de Clipping Consolidado: {len(df_final)} registros totais na base.")
 
 # ==========================================
 # 4. EXECUÇÃO DUPLA
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.17.0 (Multi-Engine Clipping)...")
+    print("Iniciando Painel DICOM v1.18.0 (Continuous Memorial)...")
     df_portais = extrair_noticias()
     limpar_e_salvar_dados(df_portais)
     
     df_midia = extrair_clipping()
     salvar_clipping(df_midia)
     
-    print("Processo v1.17.0 finalizado.")
+    print("Processo v1.18.0 finalizado.")
