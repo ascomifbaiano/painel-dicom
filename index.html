@@ -1,10 +1,10 @@
-<!-- index.html - v1.14.0 -->
+<!-- index.html - v1.16.0 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.14.0</title>
+    <title>Painel DICOM | IF Baiano v1.16.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -26,8 +26,8 @@
         .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 30s linear infinite; font-weight: 600; font-size: 14px; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--borda); }
-        .tab-btn { background: none; border: none; font-size: 15px; font-weight: 600; color: #888; cursor: pointer; padding: 12px 25px; border-radius: 8px 8px 0 0; transition: 0.3s; margin-bottom: -2px; }
+        .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--borda); overflow-x: auto;}
+        .tab-btn { background: none; border: none; font-size: 15px; font-weight: 600; color: #888; cursor: pointer; padding: 12px 25px; border-radius: 8px 8px 0 0; transition: 0.3s; margin-bottom: -2px; white-space: nowrap;}
         .tab-btn.active { color: var(--verde-if); background: var(--branco); border: 2px solid var(--borda); border-bottom: 2px solid var(--branco); }
         .tab-btn:hover:not(.active) { color: var(--texto); background: #eaeaea; }
         .tab-content { display: none; }
@@ -54,6 +54,13 @@
         .chart-header-custom select { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--borda); font-family: inherit; font-size: 13px; outline: none; background: #fdfdfd; cursor: pointer; }
         @media (max-width: 800px) { .charts-main-grid { grid-template-columns: 1fr; } }
 
+        .chart-scroll-container { width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
+        .chart-scroll-inner { position: relative; height: 300px; min-width: 100%; }
+        .chart-scroll-container::-webkit-scrollbar { height: 8px; }
+        .chart-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .chart-scroll-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .chart-scroll-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
         .inactivity-list { background: var(--branco); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .inactivity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
         .unit-status { padding: 10px; border-radius: 6px; border: 1px solid var(--borda); font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
@@ -68,12 +75,19 @@
         .tag-tipo { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #e0f7fa; color: #006064; text-transform: uppercase; margin-bottom: 5px; display: inline-block; }
         .tag-evento { background: #fff3e0; color: #e65100; }
         .tag-inst { background: #f3e5f5; color: #4a148c; }
+        .tag-veiculo { background: #e3f2fd; color: #0277bd; font-weight: bold; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
         
         .link-btn { color: var(--verde-if); text-decoration: none; font-weight: 600; }
         .link-btn:hover { text-decoration: underline; color: var(--vermelho-if); }
 
         .versao { text-align: center; margin-top: 30px; font-size: 12px; color: #888; }
         .loading { text-align: center; font-style: italic; color: #888; margin-top: 40px; }
+        
+        /* Botões de Ano (Clipping) */
+        .year-filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;}
+        .btn-year { background: #fff; border: 1px solid var(--borda); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; font-weight: 600; color: #555; transition: 0.2s; }
+        .btn-year.active { background: var(--verde-if); color: #fff; border-color: var(--verde-if); }
+        .btn-year:hover:not(.active) { background: #eee; }
     </style>
 </head>
 <body>
@@ -97,34 +111,29 @@
             <div class="ticker" id="ticker-content">Carregando últimas publicações...</div>
         </div>
 
-        <div class="filtros-container">
-            <div class="input-group">
-                <label for="data-inicio">Data Inicial do Período</label>
-                <input type="date" id="data-inicio">
-            </div>
-            <div class="input-group">
-                <label for="data-fim">Data Final do Período</label>
-                <input type="date" id="data-fim">
-            </div>
-            <button class="btn" onclick="aplicarFiltros()">Aplicar Filtro Global</button>
-            <button class="btn btn-sec" onclick="verTodoHistorico()">Ver Acervo Completo</button>
-        </div>
-
         <div class="tabs-nav">
             <button class="tab-btn active" onclick="abrirAba('aba-metricas', this)">📈 Dashboard Analítico</button>
-            <button class="tab-btn" onclick="abrirAba('aba-tabela', this)">📋 Registros do Período</button>
+            <button class="tab-btn" onclick="abrirAba('aba-tabela', this)">📋 Registros Oficiais</button>
+            <button class="tab-btn" onclick="abrirAba('aba-clipping', this)">📰 Clipping na Mídia</button>
         </div>
 
-        <!-- ABA 1: MÉTRICAS -->
+        <!-- ABA 1: MÉTRICAS (Oficial) -->
         <div id="aba-metricas" class="tab-content active">
+            <div class="filtros-container">
+                <div class="input-group"><label>Data Inicial</label><input type="date" id="data-inicio"></div>
+                <div class="input-group"><label>Data Final</label><input type="date" id="data-fim"></div>
+                <button class="btn" onclick="aplicarFiltros()">Aplicar Filtro</button>
+                <button class="btn btn-sec" onclick="verTodoHistorico()">Ver Tudo</button>
+            </div>
+
             <div class="inactivity-list">
-                <h3 style="margin-top:0; font-size:16px; color: var(--texto);">🌡️ Termômetro de Atividade (Dias sem publicação)</h3>
+                <h3 style="margin-top:0; font-size:16px; color: var(--texto);">🌡️ Termômetro de Atividade (Dias sem publicação oficial)</h3>
                 <div id="grid-inatividade" class="inactivity-grid"></div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card"><h3>Total no Período</h3><div id="stat-total" class="valor">-</div></div>
-                <div class="stat-card"><h3>Comparativo Ano (YoY)</h3><div id="stat-yoy" class="valor" style="font-size:18px;">-</div></div>
+                <div class="stat-card"><h3>Comparativo Ano (YoY)</h3><div id="stat-yoy" class="valor" style="font-size:16px;">-</div></div>
                 <div class="stat-card"><h3>Leitura Média</h3><div id="stat-leitura" class="valor" style="font-size:18px;">-</div></div>
                 <div class="stat-card"><h3>Dia Produtivo</h3><div id="stat-dia" class="valor" style="font-size:18px;">-</div></div>
             </div>
@@ -132,14 +141,11 @@
             <div class="charts-main-grid">
                 <div class="chart-box">
                     <h3 style="margin-top: 0; font-size: 15px; color: #444; margin-bottom: 15px; text-align: center;">Volume Total (Ranking)</h3>
-                    <canvas id="chartVolume"></canvas>
+                    <div class="chart-scroll-container"><div class="chart-scroll-inner" id="wrap-volume"><canvas id="chartVolume"></canvas></div></div>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-header-custom">
-                        <h3>Evolução Temporal</h3>
-                        <select id="filtro-evolucao" onchange="atualizarGraficoEvolucao()"></select>
-                    </div>
-                    <canvas id="chartEvolucao"></canvas>
+                    <div class="chart-header-custom"><h3>Evolução Temporal</h3><select id="filtro-evolucao" onchange="atualizarGraficoEvolucao()"></select></div>
+                    <div class="chart-scroll-container"><div class="chart-scroll-inner" id="wrap-evolucao"><canvas id="chartEvolucao"></canvas></div></div>
                 </div>
             </div>
 
@@ -149,33 +155,50 @@
                     <canvas id="chartCategorias"></canvas>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-header-custom">
-                        <h3>Ritmo de Publicação</h3>
-                        <select id="filtro-pacing" onchange="atualizarGraficoPacing()"></select>
-                    </div>
-                    <canvas id="chartPacing"></canvas>
+                    <div class="chart-header-custom"><h3>Ritmo de Publicação</h3><select id="filtro-pacing" onchange="atualizarGraficoPacing()"></select></div>
+                    <div class="chart-scroll-container"><div class="chart-scroll-inner" id="wrap-pacing"><canvas id="chartPacing"></canvas></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- ABA 2: TABELA DE REGISTROS -->
+        <!-- ABA 2: REGISTROS OFICIAIS -->
         <div id="aba-tabela" class="tab-content">
             <div class="table-box">
-                <h3 style="margin-top:0; color: var(--texto);">Listagem Detalhada e Categorizada</h3>
+                <h3 style="margin-top:0; color: var(--texto);">Notícias dos Portais do IF Baiano</h3>
                 <table>
                     <thead><tr><th>Data/Hora</th><th>Unidade</th><th>Notícia & Categoria</th><th>Ação</th></tr></thead>
                     <tbody id="tabela-corpo"></tbody>
                 </table>
             </div>
         </div>
+
+        <!-- ABA 3: CLIPPING NA MÍDIA -->
+        <div id="aba-clipping" class="tab-content">
+            <div class="table-box">
+                <h3 style="margin-top:0; margin-bottom:10px; color: var(--texto);">Pesquisar na Mídia (Google News & Histórico)</h3>
+                
+                <div class="year-filters" id="clipping-years-container">
+                    <!-- Botões de ano injetados via JS -->
+                </div>
+
+                <table>
+                    <thead><tr><th>Data</th><th>Veículo de Comunicação</th><th>Assunto / Título da Matéria</th><th>Ação</th></tr></thead>
+                    <tbody id="tabela-clipping-corpo">
+                        <tr><td colspan="4" style="text-align: center; color: #888;">Carregando dados da mídia...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
-    <div class="versao">Painel DICOM v1.14.0 - Incremental Sync Edition</div>
+    <div class="versao">Painel DICOM v1.16.0 - Media Clipping Edition</div>
 </div>
 
 <script>
     const timestampAgorinha = new Date().getTime();
     const csvUrl = 'data/noticias_if.csv?v=' + timestampAgorinha;
+    const clippingUrl = 'data/clipping.csv?v=' + timestampAgorinha;
 
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const mesesAbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -185,6 +208,10 @@
     let dadosGlobais = [];
     let dadosFiltradosAtuais = [];
     let instanciasGraficos = {}; 
+    
+    // Variáveis para Clipping
+    let dadosClipping = [];
+    let anoAtualClipping = 'Geral';
 
     fetch(csvUrl, { method: 'HEAD' }).then(res => {
         const lastMod = res.headers.get('Last-Modified');
@@ -201,6 +228,7 @@
         elementoBtn.classList.add('active');
     }
 
+    // CARREGA DADOS OFICIAIS
     Papa.parse(csvUrl, {
         download: true, header: true, skipEmptyLines: true,
         complete: function(res) {
@@ -208,37 +236,107 @@
             document.getElementById('status').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             
-            const dataPiso = dadosGlobais.reduce((min, p) => p.data < min ? p.data : min, dadosGlobais[0].data);
-            const pDataPiso = dataPiso.split('-');
-            document.getElementById('info-piso').innerText = `Acervo Histórico desde: ${pDataPiso[2]}/${pDataPiso[1]}/${pDataPiso[0]}`;
+            if(dadosGlobais.length > 0) {
+                const dataPiso = dadosGlobais.reduce((min, p) => p.data < min ? p.data : min, dadosGlobais[0].data);
+                const pDataPiso = dataPiso.split('-');
+                document.getElementById('info-piso').innerText = `Acervo Histórico desde: ${pDataPiso[2]}/${pDataPiso[1]}/${pDataPiso[0]}`;
 
-            const ticker = document.getElementById('ticker-content');
-            const ultimasNews = dadosGlobais.slice(0, 6);
-            ticker.innerHTML = ultimasNews.map(i => `🚨 <b>${i.campus}:</b> ${i.titulo}`).join(' &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; ');
+                const ticker = document.getElementById('ticker-content');
+                const ultimasNews = dadosGlobais.slice(0, 6);
+                ticker.innerHTML = ultimasNews.map(i => `🚨 <b>${i.campus}:</b> ${i.titulo}`).join(' &nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp; ');
 
-            const unidadesUnicas = [...new Set(dadosGlobais.map(i => i.campus))].sort();
-            const selects = [document.getElementById('filtro-evolucao'), document.getElementById('filtro-pacing')];
-            selects.forEach(sel => {
-                sel.innerHTML = `<option value="Todos">Todos (Geral)</option>`;
-                unidadesUnicas.forEach(u => {
-                    const selected = u === 'Reitoria' ? 'selected' : '';
-                    sel.innerHTML += `<option value="${u}" ${selected}>${u}</option>`;
+                const unidadesUnicas = [...new Set(dadosGlobais.map(i => i.campus))].sort();
+                const selects = [document.getElementById('filtro-evolucao'), document.getElementById('filtro-pacing')];
+                selects.forEach(sel => {
+                    sel.innerHTML = `<option value="Todos">Todos (Geral)</option>`;
+                    unidadesUnicas.forEach(u => {
+                        const selected = u === 'Reitoria' ? 'selected' : '';
+                        sel.innerHTML += `<option value="${u}" ${selected}>${u}</option>`;
+                    });
                 });
-            });
 
-            const hoje = new Date();
-            const doisMesesAtras = new Date();
-            doisMesesAtras.setMonth(hoje.getMonth() - 2);
+                const hoje = new Date();
+                const doisMesesAtras = new Date();
+                doisMesesAtras.setMonth(hoje.getMonth() - 2);
+                const formataDataIso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                document.getElementById('data-inicio').value = formataDataIso(doisMesesAtras);
+                document.getElementById('data-fim').value = formataDataIso(hoje);
 
-            const formataDataIso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-            document.getElementById('data-inicio').value = formataDataIso(doisMesesAtras);
-            document.getElementById('data-fim').value = formataDataIso(hoje);
-
-            aplicarFiltros();
+                aplicarFiltros();
+            }
+            
+            // Inicia o carregamento do Clipping
+            carregarClipping();
         }
     });
 
+    // CARREGA DADOS CLIPPING
+    function carregarClipping() {
+        Papa.parse(clippingUrl, {
+            download: true, header: true, skipEmptyLines: true,
+            complete: function(res) {
+                dadosClipping = res.data;
+                // Extrair anos únicos para criar os botões
+                const anos = [...new Set(dadosClipping.map(i => i.data.split('-')[0]))].sort().reverse();
+                
+                const btnContainer = document.getElementById('clipping-years-container');
+                btnContainer.innerHTML = `<button class="btn-year active" onclick="filtrarClipping('Geral', this)">Geral</button>`;
+                anos.forEach(ano => {
+                    if(ano && ano.length === 4) {
+                        btnContainer.innerHTML += `<button class="btn-year" onclick="filtrarClipping('${ano}', this)">${ano}</button>`;
+                    }
+                });
+                
+                // Renderiza inicial
+                renderizarTabelaClipping();
+            },
+            error: function() {
+                document.getElementById('tabela-clipping-corpo').innerHTML = `<tr><td colspan="4" style="text-align: center; color: #E31B23;">Arquivo clipping.csv não encontrado. Crie o arquivo na pasta data/ para ativar.</td></tr>`;
+            }
+        });
+    }
+
+    // FUNÇÕES DO CLIPPING
+    window.filtrarClipping = function(ano, btnElement) {
+        anoAtualClipping = ano;
+        // Atualiza botões
+        document.querySelectorAll('.btn-year').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        renderizarTabelaClipping();
+    }
+
+    function renderizarTabelaClipping() {
+        const tbody = document.getElementById('tabela-clipping-corpo');
+        tbody.innerHTML = '';
+        
+        let dadosExibicao = dadosClipping;
+        if (anoAtualClipping !== 'Geral') {
+            dadosExibicao = dadosClipping.filter(i => i.data.startsWith(anoAtualClipping));
+        }
+
+        if (dadosExibicao.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Nenhuma notícia encontrada para este filtro.</td></tr>`;
+            return;
+        }
+
+        dadosExibicao.forEach(item => {
+            const pData = item.data.split('-');
+            const dataBR = pData.length === 3 ? `${pData[2]}/${pData[1]}/${pData[0]}` : item.data;
+            const veiculo = item.veiculo || 'Desconhecido';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${dataBR}</td>
+                <td><span class="tag-veiculo">${veiculo}</span></td>
+                <td style="font-weight: 500;">${item.assunto}</td>
+                <td><a href="${item.link}" target="_blank" class="link-btn">Ler Matéria</a></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ==========================================
+    // FUNÇÕES DO PAINEL OFICIAL (MANTIDAS)
+    // ==========================================
     function aplicarFiltros() {
         const di = document.getElementById('data-inicio').value;
         const df = document.getElementById('data-fim').value;
@@ -270,16 +368,14 @@
 
     function recriarGrafico(idElemento, config) {
         if (instanciasGraficos[idElemento]) { instanciasGraficos[idElemento].destroy(); }
+        config.options.maintainAspectRatio = false; 
         instanciasGraficos[idElemento] = new Chart(document.getElementById(idElemento), config);
     }
 
     window.atualizarGraficoEvolucao = function() {
         const unidadeSel = document.getElementById('filtro-evolucao').value;
         let dadosParaGrafico = dadosFiltradosAtuais;
-        
-        if (unidadeSel !== 'Todos') {
-            dadosParaGrafico = dadosFiltradosAtuais.filter(i => i.campus === unidadeSel);
-        }
+        if (unidadeSel !== 'Todos') dadosParaGrafico = dadosFiltradosAtuais.filter(i => i.campus === unidadeSel);
 
         const mesesObj = {};
         dadosParaGrafico.forEach(item => {
@@ -294,6 +390,9 @@
             const [ano, mes] = k.split('-');
             return `${mesesAbr[parseInt(mes)-1]}/${ano.slice(-2)}`;
         });
+
+        const widthDinamico = Math.max(100, labelsMesesBR.length * 50);
+        document.getElementById('wrap-evolucao').style.minWidth = `max(100%, ${widthDinamico}px)`;
 
         recriarGrafico('chartEvolucao', {
             type: 'line',
@@ -312,10 +411,7 @@
     window.atualizarGraficoPacing = function() {
         const unidadeSel = document.getElementById('filtro-pacing').value;
         let dadosParaGrafico = dadosFiltradosAtuais;
-        
-        if (unidadeSel !== 'Todos') {
-            dadosParaGrafico = dadosFiltradosAtuais.filter(i => i.campus === unidadeSel);
-        }
+        if (unidadeSel !== 'Todos') dadosParaGrafico = dadosFiltradosAtuais.filter(i => i.campus === unidadeSel);
 
         const pacingData = {};
         dadosParaGrafico.forEach(item => {
@@ -331,9 +427,7 @@
             let datas = pacingData[grupo].sort((a, b) => b - a);
             if (datas.length > 1) {
                 let diffTotal = 0;
-                for (let i = 0; i < datas.length - 1; i++) {
-                    diffTotal += (datas[i] - datas[i+1]) / (1000 * 60 * 60 * 24);
-                }
+                for (let i = 0; i < datas.length - 1; i++) diffTotal += (datas[i] - datas[i+1]) / (1000 * 60 * 60 * 24);
                 ritmo[grupo] = Math.round(diffTotal / (datas.length - 1));
             } else {
                 ritmo[grupo] = 0; 
@@ -343,13 +437,13 @@
         const labels = Object.keys(ritmo);
         const data = labels.map(l => ritmo[l]);
 
+        const widthDinamico = Math.max(100, labels.length * 60);
+        document.getElementById('wrap-pacing').style.minWidth = `max(100%, ${widthDinamico}px)`;
+
         recriarGrafico('chartPacing', {
             type: 'bar',
-            data: { 
-                labels: labels, 
-                datasets: [{ label: 'Dias entre publicações (Média)', data: data, backgroundColor: '#81c784', borderRadius: 4 }] 
-            },
-            options: { indexAxis: 'y', plugins: { legend: {display: false} }, scales: { x: { beginAtZero: true } } }
+            data: { labels: labels, datasets: [{ label: 'Dias (Média)', data: data, backgroundColor: '#81c784', borderRadius: 4 }] },
+            options: { plugins: { legend: {display: false} }, scales: { y: { beginAtZero: true } } }
         });
     }
 
@@ -361,9 +455,7 @@
         dadosGlobais.forEach(item => {
             const d = new Date(item.data + 'T12:00:00');
             if (isNaN(d)) return;
-            if (!stats.ultimaPost[item.campus] || d > stats.ultimaPost[item.campus]) {
-                stats.ultimaPost[item.campus] = d;
-            }
+            if (!stats.ultimaPost[item.campus] || d > stats.ultimaPost[item.campus]) stats.ultimaPost[item.campus] = d;
         });
 
         dadosFiltradosAtuais.forEach(item => {
@@ -375,12 +467,13 @@
             stats.categorias[classificarNoticia(item.titulo).nome]++;
         });
 
-        let textoYoY = "N/A";
+        let textoYoY = "Aguardando dados";
         if (dataInicioRaw && dataFimRaw) {
             const dI_last = new Date(dataInicioRaw + 'T12:00:00'); dI_last.setFullYear(dI_last.getFullYear() - 1);
             const dF_last = new Date(dataFimRaw + 'T12:00:00'); dF_last.setFullYear(dF_last.getFullYear() - 1);
             const formataIso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const countLastYear = dadosGlobais.filter(i => i.data >= formataIso(dI_last) && i.data <= formataIso(dF_last)).length;
+            
             if (countLastYear > 0) {
                 const perc = (((dadosFiltradosAtuais.length - countLastYear) / countLastYear) * 100).toFixed(1);
                 textoYoY = perc >= 0 ? `+${perc}% 🟢` : `${perc}% 🔴`;
@@ -425,16 +518,19 @@
         });
 
         const campiOrdem = Object.keys(stats.volume).sort((a, b) => stats.volume[b] - stats.volume[a]);
+        const widthDinamicoVol = Math.max(100, campiOrdem.length * 60);
+        document.getElementById('wrap-volume').style.minWidth = `max(100%, ${widthDinamicoVol}px)`;
+
         recriarGrafico('chartVolume', {
             type: 'bar',
             data: { labels: campiOrdem, datasets: [{ label: 'Publicações', data: campiOrdem.map(c => stats.volume[c]), backgroundColor: corVerdeIF, borderRadius: 4 }] },
-            options: { plugins: { legend: {display: false} } }
+            options: { plugins: { legend: {display: false} }, scales: { y: { beginAtZero: true } } }
         });
 
         recriarGrafico('chartCategorias', {
             type: 'doughnut',
             data: { labels: Object.keys(stats.categorias), datasets: [{ data: Object.values(stats.categorias), backgroundColor: ['#29b6f6', '#ffa726', '#ab47bc'] }] },
-            options: { plugins: { legend: { position: 'bottom' } } }
+            options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: true }
         });
 
         atualizarGraficoEvolucao();
