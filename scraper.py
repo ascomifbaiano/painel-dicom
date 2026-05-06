@@ -1,4 +1,4 @@
-# scraper.py - v1.16.0
+# scraper.py - v1.17.0
 import requests
 import pandas as pd
 import os
@@ -98,49 +98,73 @@ def limpar_e_salvar_dados(df_novo):
     print(f"Rede Interna consolidada: {len(df_final)} registros.")
 
 # ==========================================
-# 3. MOTOR 2: GOOGLE NEWS CLIPPING (MÍDIA EXTERNA)
+# 3. MOTOR 2: GOOGLE + BING NEWS CLIPPING
 # ==========================================
 def extrair_clipping():
-    print("\nBuscando IF Baiano na Mídia (Google News)...")
+    print("\nBuscando IF Baiano na Mídia Externa (Multi-Engine)...")
     clipping_coletado = []
+    
     df_existente = pd.read_csv(ARQUIVO_CLIPPING) if os.path.exists(ARQUIVO_CLIPPING) else pd.DataFrame()
     links_conhecidos = set(df_existente['link'].dropna().tolist()) if not df_existente.empty else set()
 
-    # RSS do Google News para a busca "IF Baiano"
-    url_rss = 'https://news.google.com/rss/search?q="IF+Baiano"&hl=pt-BR&gl=BR&ceid=BR:pt-419'
+    # Fontes RSS de Pesquisa
+    fontes_pesquisa = [
+        ("Google News", 'https://news.google.com/rss/search?q="IF+Baiano"&hl=pt-BR&gl=BR&ceid=BR:pt-419'),
+        ("Bing News", 'https://www.bing.com/news/search?q="IF+Baiano"&format=rss')
+    ]
     
-    try:
-        response = requests.get(url_rss, timeout=30)
-        root = ET.fromstring(response.content)
-        
-        for item in root.findall('./channel/item'):
-            link = item.find('link').text
-            if link in links_conhecidos:
-                continue # Pula se já temos no CSV
+    for nome_motor, url_rss in fontes_pesquisa:
+        print(f" -> Varrendo {nome_motor}...")
+        try:
+            # Fake User-Agent vital para o Bing não bloquear a leitura
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'}
+            response = requests.get(url_rss, headers=headers, timeout=30)
+            root = ET.fromstring(response.content)
+            
+            for item in root.findall('./channel/item'):
+                link = item.find('link').text
                 
-            titulo_completo = item.find('title').text
-            
-            # O Google News sempre coloca o nome do veículo no final do título após um " - "
-            if ' - ' in titulo_completo:
-                partes = titulo_completo.rsplit(' - ', 1)
-                titulo = html.unescape(partes[0].strip())
-                veiculo = html.unescape(partes[1].strip())
-            else:
-                titulo = html.unescape(titulo_completo)
+                # Ignora se já estiver no banco ou se foi coletado pelo motor anterior agora mesmo
+                if link in links_conhecidos:
+                    continue 
+                    
+                titulo_completo = item.find('title').text if item.find('title') is not None else 'Sem Título'
                 veiculo = "Mídia Externa"
+                
+                # Inteligência para extrair o nome do Veículo do RSS (Tag Source ou Título)
+                source_tag = item.find('source')
+                if source_tag is not None and source_tag.text:
+                    veiculo = html.unescape(source_tag.text)
+                    if ' - ' in titulo_completo and veiculo in titulo_completo:
+                        titulo_completo = titulo_completo.rsplit(' - ', 1)[0]
+                    titulo = html.unescape(titulo_completo)
+                else:
+                    if ' - ' in titulo_completo:
+                        partes = titulo_completo.rsplit(' - ', 1)
+                        titulo = html.unescape(partes[0].strip())
+                        veiculo = html.unescape(partes[1].strip())
+                    else:
+                        titulo = html.unescape(titulo_completo)
 
-            data_pub_rss = item.find('pubDate').text
-            data_formatada = parsedate_to_datetime(data_pub_rss).strftime('%Y-%m-%d')
+                # Tratamento de Data
+                data_pub_rss = item.find('pubDate').text
+                try:
+                    data_formatada = parsedate_to_datetime(data_pub_rss).strftime('%Y-%m-%d')
+                except:
+                    data_formatada = datetime.now().strftime('%Y-%m-%d')
 
-            clipping_coletado.append({
-                'data': data_formatada,
-                'assunto': titulo,
-                'veiculo': veiculo,
-                'link': link
-            })
-            
-    except Exception as e:
-        print(f"Erro ao buscar no Google News: {e}")
+                clipping_coletado.append({
+                    'data': data_formatada,
+                    'assunto': titulo,
+                    'veiculo': veiculo,
+                    'link': link
+                })
+                
+                # Adiciona ao set para o Bing não repetir o que o Google achou no mesmo segundo
+                links_conhecidos.add(link) 
+                
+        except Exception as e:
+            print(f"   X Erro ao buscar no {nome_motor}: {e}")
 
     return pd.DataFrame(clipping_coletado)
 
@@ -157,18 +181,18 @@ def salvar_clipping(df_novo):
         df_final = df_novo
 
     df_final.sort_values(by=['data'], ascending=[False]).to_csv(ARQUIVO_CLIPPING, index=False, encoding='utf-8')
-    print(f"Clipping consolidado: {len(df_final)} registros.")
+    print(f"Clipping consolidado: {len(df_final)} registros totais na base.")
 
 
 # ==========================================
 # 4. EXECUÇÃO DUPLA
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.16.0 (Media Clipping Edition)...")
+    print("Iniciando Painel DICOM v1.17.0 (Multi-Engine Clipping)...")
     df_portais = extrair_noticias()
     limpar_e_salvar_dados(df_portais)
     
     df_midia = extrair_clipping()
     salvar_clipping(df_midia)
     
-    print("Processo v1.16.0 finalizado.")
+    print("Processo v1.17.0 finalizado.")
