@@ -1,4 +1,4 @@
-# update_data.yml - v1.19.0
+# update_data.yml - v1.20.0
 name: Automação do Painel DICOM
 
 on:
@@ -13,7 +13,7 @@ jobs:
       - name: 1. Baixar o repositório
         uses: actions/checkout@v4
 
-      - name: 2. Configurar o ambiente Python
+      - name: 2. Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
@@ -21,13 +21,13 @@ jobs:
       - name: 3. Instalar dependências
         run: pip install -r requirements.txt
 
-      - name: 4. Executar Motores Oficiais e Mídia
+      - name: 4. Executar Limpeza e Motores
         run: python scraper.py
 
-      - name: 5. Salvar dados na nuvem
+      - name: 5. Commit e Push
         run: |
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Correção Layout Chart.js (Painel v1.19.0)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Auto-Tagging e Advanced Analytics (Painel v1.20.0)"
           git push
