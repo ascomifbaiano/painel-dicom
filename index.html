@@ -212,19 +212,19 @@
     let dadosFiltradosAtuais = [];
     let instanciasGraficos = {}; 
 
-    // Função de Download do PDF
+// Função de Download do PDF (Corrigida contra cortes)
     function baixarRelatorio() {
         const elemento = document.getElementById('area-pdf');
         const opt = {
-            margin:       0.5,
+            margin:       0.3,
             filename:     'Relatorio_Portais_DICOM.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            html2canvas:  { scale: 2, useCORS: true, windowWidth: 1200 }, // Força a largura para não vazar a lateral
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, // Formato Paisagem
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Impede que os gráficos sejam cortados ao meio
         };
         html2pdf().set(opt).from(elemento).save();
     }
-
     fetch(csvUrl, { method: 'HEAD' }).then(res => {
         const lastMod = res.headers.get('Last-Modified');
         if (lastMod) {
