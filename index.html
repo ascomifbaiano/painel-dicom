@@ -1,10 +1,10 @@
-<!-- index.html - v1.18.0 -->
+<!-- index.html - v1.19.0 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.18.0</title>
+    <title>Painel DICOM | IF Baiano v1.19.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -53,13 +53,6 @@
         .chart-header-custom h3 { margin: 0; font-size: 15px; color: #444; }
         .chart-header-custom select { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--borda); font-family: inherit; font-size: 13px; outline: none; background: #fdfdfd; cursor: pointer; }
         @media (max-width: 800px) { .charts-main-grid { grid-template-columns: 1fr; } }
-
-        .chart-scroll-container { width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
-        .chart-scroll-inner { position: relative; height: 300px; min-width: 100%; }
-        .chart-scroll-container::-webkit-scrollbar { height: 8px; }
-        .chart-scroll-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .chart-scroll-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-        .chart-scroll-container::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
         .inactivity-list { background: var(--branco); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .inactivity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
@@ -140,11 +133,11 @@
             <div class="charts-main-grid">
                 <div class="chart-box">
                     <h3 style="margin-top: 0; font-size: 15px; color: #444; margin-bottom: 15px; text-align: center;">Volume Total (Ranking)</h3>
-                    <div class="chart-scroll-container"><div class="chart-scroll-inner" id="wrap-volume"><canvas id="chartVolume"></canvas></div></div>
+                    <canvas id="chartVolume"></canvas>
                 </div>
                 <div class="chart-box">
                     <div class="chart-header-custom"><h3>Evolução Temporal</h3><select id="filtro-evolucao" onchange="atualizarGraficoEvolucao()"></select></div>
-                    <div class="chart-scroll-container"><div class="chart-scroll-inner" id="wrap-evolucao"><canvas id="chartEvolucao"></canvas></div></div>
+                    <canvas id="chartEvolucao"></canvas>
                 </div>
             </div>
 
@@ -155,7 +148,7 @@
                 </div>
                 <div class="chart-box">
                     <div class="chart-header-custom"><h3>Ritmo de Publicação</h3><select id="filtro-pacing" onchange="atualizarGraficoPacing()"></select></div>
-                    <div class="chart-scroll-container"><div class="chart-scroll-inner" id="wrap-pacing"><canvas id="chartPacing"></canvas></div></div>
+                    <canvas id="chartPacing"></canvas>
                 </div>
             </div>
         </div>
@@ -192,7 +185,7 @@
 
     </div>
 
-    <div class="versao">Painel DICOM v1.18.0 - Continuous Memorial Edition</div>
+    <div class="versao">Painel DICOM v1.19.0 - Fixed Layout Edition</div>
 </div>
 
 <script>
@@ -331,7 +324,7 @@
     }
 
     // ==========================================
-    // FUNÇÕES DO PAINEL OFICIAL (MANTIDAS)
+    // FUNÇÕES DO PAINEL OFICIAL 
     // ==========================================
     function aplicarFiltros() {
         const di = document.getElementById('data-inicio').value;
@@ -362,9 +355,9 @@
         }
     }
 
+    // CORREÇÃO AQUI: Gráficos voltam ao normal, sem forçar aspect ratio que "vaza" a tela.
     function recriarGrafico(idElemento, config) {
         if (instanciasGraficos[idElemento]) { instanciasGraficos[idElemento].destroy(); }
-        config.options.maintainAspectRatio = false; 
         instanciasGraficos[idElemento] = new Chart(document.getElementById(idElemento), config);
     }
 
@@ -386,9 +379,6 @@
             const [ano, mes] = k.split('-');
             return `${mesesAbr[parseInt(mes)-1]}/${ano.slice(-2)}`;
         });
-
-        const widthDinamico = Math.max(100, labelsMesesBR.length * 50);
-        document.getElementById('wrap-evolucao').style.minWidth = `max(100%, ${widthDinamico}px)`;
 
         recriarGrafico('chartEvolucao', {
             type: 'line',
@@ -432,9 +422,6 @@
 
         const labels = Object.keys(ritmo);
         const data = labels.map(l => ritmo[l]);
-
-        const widthDinamico = Math.max(100, labels.length * 60);
-        document.getElementById('wrap-pacing').style.minWidth = `max(100%, ${widthDinamico}px)`;
 
         recriarGrafico('chartPacing', {
             type: 'bar',
@@ -514,9 +501,6 @@
         });
 
         const campiOrdem = Object.keys(stats.volume).sort((a, b) => stats.volume[b] - stats.volume[a]);
-        const widthDinamicoVol = Math.max(100, campiOrdem.length * 60);
-        document.getElementById('wrap-volume').style.minWidth = `max(100%, ${widthDinamicoVol}px)`;
-
         recriarGrafico('chartVolume', {
             type: 'bar',
             data: { labels: campiOrdem, datasets: [{ label: 'Publicações', data: campiOrdem.map(c => stats.volume[c]), backgroundColor: corVerdeIF, borderRadius: 4 }] },
@@ -526,7 +510,7 @@
         recriarGrafico('chartCategorias', {
             type: 'doughnut',
             data: { labels: Object.keys(stats.categorias), datasets: [{ data: Object.values(stats.categorias), backgroundColor: ['#29b6f6', '#ffa726', '#ab47bc'] }] },
-            options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: true }
+            options: { plugins: { legend: { position: 'bottom' } } }
         });
 
         atualizarGraficoEvolucao();
