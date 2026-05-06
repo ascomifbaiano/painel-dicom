@@ -1,10 +1,10 @@
-<!-- index.html - v1.17.0 -->
+<!-- index.html - v1.18.0 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel DICOM | IF Baiano v1.17.0</title>
+    <title>Painel DICOM | IF Baiano v1.18.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -113,7 +113,7 @@
         <div class="tabs-nav">
             <button class="tab-btn active" onclick="abrirAba('aba-metricas', this)">📈 Dashboard Analítico</button>
             <button class="tab-btn" onclick="abrirAba('aba-tabela', this)">📋 Registros Oficiais</button>
-            <button class="tab-btn" onclick="abrirAba('aba-clipping', this)">📰 Clipping na Mídia</button>
+            <button class="tab-btn" onclick="abrirAba('aba-clipping', this)">📰 Acervo de Clipping</button>
         </div>
 
         <!-- ABA 1: MÉTRICAS (Oficial) -->
@@ -174,7 +174,8 @@
         <!-- ABA 3: CLIPPING NA MÍDIA -->
         <div id="aba-clipping" class="tab-content">
             <div class="table-box">
-                <h3 style="margin-top:0; margin-bottom:10px; color: var(--texto);">Pesquisar na Mídia (Google News, Bing News & Histórico)</h3>
+                <h3 style="margin-top:0; margin-bottom:10px; color: var(--texto);">Acervo Memorial de Clipping (Mídia Externa)</h3>
+                <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Integração contínua com motores de busca para arquivamento de menções ao IF Baiano na imprensa.</p>
                 
                 <div class="year-filters" id="clipping-years-container">
                     <!-- Botões de ano injetados via JS -->
@@ -183,7 +184,7 @@
                 <table>
                     <thead><tr><th>Data</th><th>Veículo de Comunicação</th><th>Assunto / Título da Matéria</th><th>Ação</th></tr></thead>
                     <tbody id="tabela-clipping-corpo">
-                        <tr><td colspan="4" style="text-align: center; color: #888;">Carregando dados da mídia...</td></tr>
+                        <tr><td colspan="4" style="text-align: center; color: #888;">Sincronizando acervo da mídia...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -191,7 +192,7 @@
 
     </div>
 
-    <div class="versao">Painel DICOM v1.17.0 - Multi-Engine Clipping Edition</div>
+    <div class="versao">Painel DICOM v1.18.0 - Continuous Memorial Edition</div>
 </div>
 
 <script>
