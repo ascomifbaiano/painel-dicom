@@ -1,4 +1,4 @@
-# update_data.yml - v1.16.0
+# update_data.yml - v1.17.0
 name: Automação do Painel DICOM
 
 on:
@@ -21,13 +21,13 @@ jobs:
       - name: 3. Instalar dependências
         run: pip install -r requirements.txt
 
-      - name: 4. Executar Motor do Painel e Clipping
+      - name: 4. Executar Motores Oficiais e Mídia
         run: python scraper.py
 
-      - name: 5. Salvar dados de forma incremental
+      - name: 5. Salvar dados na nuvem
         run: |
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Clipping de Mídia Ativado (Painel v1.16.0)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Multi-Engine Clipping Google+Bing (Painel v1.17.0)"
           git push
