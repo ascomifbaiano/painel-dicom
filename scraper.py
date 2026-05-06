@@ -1,4 +1,4 @@
-# scraper.py - v1.18.0
+# scraper.py - v1.19.0
 import requests
 import pandas as pd
 import os
@@ -104,7 +104,7 @@ def extrair_clipping():
     print("\nBuscando IF Baiano na Mídia Externa (Multi-Engine)...")
     clipping_coletado = []
     
-    # Tratamento de erro na leitura do CSV manual do usuário (ignora linhas quebradas pelo Excel)
+    # Tratamento de erro na leitura do CSV manual do usuário
     if os.path.exists(ARQUIVO_CLIPPING):
         try:
             df_existente = pd.read_csv(ARQUIVO_CLIPPING, on_bad_lines='skip')
@@ -187,7 +187,6 @@ def salvar_clipping(df_novo):
     else:
         df_final = df_novo
 
-    # Ordena as notícias sempre pela data mais recente
     df_final.sort_values(by=['data'], ascending=[False]).to_csv(ARQUIVO_CLIPPING, index=False, encoding='utf-8')
     print(f"Acervo de Clipping Consolidado: {len(df_final)} registros totais na base.")
 
@@ -195,11 +194,11 @@ def salvar_clipping(df_novo):
 # 4. EXECUÇÃO DUPLA
 # ==========================================
 if __name__ == "__main__":
-    print("Iniciando Painel DICOM v1.18.0 (Continuous Memorial)...")
+    print("Iniciando Painel DICOM v1.19.0 (Fixed Layout)...")
     df_portais = extrair_noticias()
     limpar_e_salvar_dados(df_portais)
     
     df_midia = extrair_clipping()
     salvar_clipping(df_midia)
     
-    print("Processo v1.18.0 finalizado.")
+    print("Processo v1.19.0 finalizado.")
