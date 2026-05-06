@@ -3,7 +3,7 @@ name: Automação do Painel DICOM
 
 on:
   schedule:
-    - cron: '*/30 * * * *' 
+    - cron: '*/30 * * * *' # Executa a cada 30 minutos
   workflow_dispatch: 
 
 jobs:
@@ -24,10 +24,10 @@ jobs:
       - name: 4. Executar Motor do Painel
         run: python scraper.py
 
-      - name: 5. Salvar dados incrementais e purga
+      - name: 5. Salvar dados de forma incremental
         run: |
           git config --global user.name "Robo DICOM"
           git config --global user.email "automacao@dicom.ifbaiano"
           git add data/ || echo "Pasta data não encontrada."
-          git diff-index --quiet HEAD || git commit -m "⚙️ Sincronização Automática (Painel v1.14.0)"
+          git diff-index --quiet HEAD || git commit -m "⚙️ Carga Incremental Super Rápida (Painel v1.14.0)"
           git push
