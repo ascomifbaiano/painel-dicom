@@ -214,16 +214,42 @@
 
 // Função de Download do PDF (Corrigida contra cortes)
     function baixarRelatorio() {
+        // 1. Garantir que a aba de métricas esteja ativa (html2pdf não funciona bem com elementos ocultos)
+        const abaMetricas = document.getElementById('aba-metricas');
+        if (!abaMetricas.classList.contains('active')) {
+            const btnMetricas = document.querySelector('.tab-btn'); // Primeiro botão é o de métricas
+            abrirAba('aba-metricas', btnMetricas);
+        }
+
         const elemento = document.getElementById('area-pdf');
+        
+        // 2. Configurações otimizadas
         const opt = {
-            margin:       0.3,
+            margin:       [0.4, 0.4, 0.4, 0.4], // Margens: [top, left, bottom, right] em polegadas
             filename:     'Relatorio_Portais_DICOM.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, windowWidth: 1200 }, // Força a largura para não vazar a lateral
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, // Formato Paisagem
-            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Impede que os gráficos sejam cortados ao meio
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                scrollY: 0,             // Resolve o problema de corte se a página estiver scrollada
+                windowWidth: 1200,      // Simula um navegador de 1200px
+                width: 1200             // Garante a largura do canvas
+            },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
-        html2pdf().set(opt).from(elemento).save();
+
+        // 3. Estilo temporário para garantir o layout correto no PDF
+        const estiloOriginal = elemento.style.cssText;
+        elemento.style.width = '1200px';
+        elemento.style.background = 'white';
+        elemento.style.padding = '10px';
+
+        // 4. Gerar o PDF
+        html2pdf().set(opt).from(elemento).save().then(() => {
+            // Restaurar o estilo original
+            elemento.style.cssText = estiloOriginal;
+        });
     }
     fetch(csvUrl, { method: 'HEAD' }).then(res => {
         const lastMod = res.headers.get('Last-Modified');
