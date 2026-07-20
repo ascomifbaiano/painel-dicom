@@ -1170,6 +1170,7 @@
         display: function(context) { return context.dataset.data[context.dataIndex] > 0; }
     });
 
+    const startTimeLoading = Date.now();
     const timestampAgorinha = new Date().getTime();
     const csvUrl = 'data/noticias_if.csv?v=' + timestampAgorinha;
 
@@ -1203,13 +1204,19 @@
 
     function inicializarPainelComDados(data) {
         dadosGlobais = data;
-        const statusDiv = document.getElementById('status');
-        statusDiv.style.opacity = '0';
-        statusDiv.style.visibility = 'hidden';
+        const elapsed = Date.now() - startTimeLoading;
+        const minDuration = 6000; // Mínimo de 6 segundos para ver a animação líquida 2 vezes (3s cada ciclo)
+        const remaining = Math.max(0, minDuration - elapsed);
+
         setTimeout(() => {
-            statusDiv.style.display = 'none';
-        }, 400);
-        document.getElementById('dashboard').style.display = 'block';
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.opacity = '0';
+            statusDiv.style.visibility = 'hidden';
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 400);
+            document.getElementById('dashboard').style.display = 'block';
+        }, remaining);
         
         if(dadosGlobais.length > 0) {
             const dataPiso = dadosGlobais.reduce((min, p) => p.data < min ? p.data : min, dadosGlobais[0].data);

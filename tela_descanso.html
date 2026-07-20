@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tela de Descanso - Rede IF Baiano</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --if-verde: #3E9A2D;
+            --if-vermelho: #C80710;
+            --if-fundo: #050a06; /* Fundo preto/verde-escuro digital */
+            --if-branco: #ffffff;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--if-fundo);
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+        }
+
+        /* MATRIX CANVAS */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* CONTAINER DA LOGO CENTRAL */
+        .logo-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10; /* Garante que a chuva de caracteres passe atrás */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; /* Cliques passam através do logo para interatividade */
+        }
+
+        .logo-img {
+            height: 260px;
+            object-fit: contain;
+            /* Efeito de neon baseado no drop-shadow (segue o contorno transparente do PNG) */
+            animation: neon-pulse 4s infinite ease-in-out;
+        }
+
+        @keyframes neon-pulse {
+            0% {
+                filter: 
+                    drop-shadow(0 0 8px rgba(62, 154, 45, 0.8))
+                    drop-shadow(0 0 20px rgba(62, 154, 45, 0.4))
+                    drop-shadow(0 0 40px rgba(200, 7, 16, 0.3))
+                    brightness(1);
+                transform: translate(0, 0) scale(1);
+            }
+            50% {
+                filter: 
+                    drop-shadow(0 0 15px rgba(62, 154, 45, 1))
+                    drop-shadow(0 0 35px rgba(62, 154, 45, 0.7))
+                    drop-shadow(0 0 60px rgba(200, 7, 16, 0.6))
+                    brightness(1.2);
+                transform: translate(0, 0) scale(1.03);
+            }
+            100% {
+                filter: 
+                    drop-shadow(0 0 8px rgba(62, 154, 45, 0.8))
+                    drop-shadow(0 0 20px rgba(62, 154, 45, 0.4))
+                    drop-shadow(0 0 40px rgba(200, 7, 16, 0.3))
+                    brightness(1);
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        /* INTERFACE E CONTROLES FLUTUANTES */
+        .controls-overlay {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 20;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-control {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(62, 154, 45, 0.4);
+            color: rgba(255, 255, 255, 0.8);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-control:hover {
+            border-color: var(--if-verde);
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(62, 154, 45, 0.3);
+            background: rgba(62, 154, 45, 0.1);
+        }
+
+        /* TEXTO EXPLICATIVO DISCRETO NO TOPO */
+        .top-info {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.25);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            pointer-events: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-info">
+    Chuva Digital de Campi • Rede Federal IF Baiano
+</div>
+
+<div class="logo-container">
+    <img src="marca-if-baiano-vertical.png" alt="Logo IF Baiano Neon" class="logo-img">
+</div>
+
+<canvas id="matrix-canvas"></canvas>
+
+<div class="controls-overlay">
+    <button class="btn-control" onclick="toggleFullscreen()">📺 Tela Cheia</button>
+    <button class="btn-control" onclick="mudarCores()">🎨 Mudar Cores</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Nomes das unidades para a chuva digital
+    const unidades = [
+        "ALAGOINHAS", "BOM JESUS DA LAPA", "CATU", "GOVERNADOR MANGABEIRA",
+        "GUANAMBI", "ITABERABA", "ITAPETINGA", "SANTA INES", "SENHOR DO BONFIM",
+        "SERRINHA", "TEIXEIRA DE FREITAS", "URUCUCA", "VALENCA", "XIQUE-XIQUE",
+        "SANTO ESTEVAO", "RIBEIRA DO POMBAL", "REMANSO", "RUY BARBOSA", "REITORIA"
+    ];
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    // Configurações
+    const fontSize = 15;
+    let columns = Math.floor(width / fontSize);
+    let drops = [];
+    let colorMode = 0; // 0 = Verde & Vermelho, 1 = Apenas Verde, 2 = Apenas Vermelho
+
+    // Inicializa as colunas de queda
+    function initDrops() {
+        columns = Math.floor(width / fontSize);
+        drops = [];
+        for (let i = 0; i < columns; i++) {
+            // Seleciona uma palavra aleatória da lista
+            const palavra = unidades[Math.floor(Math.random() * unidades.length)];
+            drops[i] = {
+                y: Math.random() * -height - 100, // Stagger das alturas iniciais
+                palavra: palavra,
+                letraIdx: 0,
+                speed: 0.35 + Math.random() * 0.45, // Velocidade reduzida e mais suave
+                // Define se essa trilha será majoritariamente verde ou vermelha
+                baseColor: Math.random() > 0.35 ? 'verde' : 'vermelho'
+            };
+        }
+    }
+
+    initDrops();
+
+    // Redimensionamento responsivo
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        initDrops();
+    });
+
+    // Loop de desenho Matrix
+    function draw() {
+        // Efeito de rastro semi-transparente
+        ctx.fillStyle = 'rgba(5, 10, 6, 0.1)';
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.font = '900 ' + fontSize + 'px "Outfit", monospace';
+
+        for (let i = 0; i < drops.length; i++) {
+            const drop = drops[i];
+            // Utiliza módulo para repetir as letras do nome do campus em loop durante a queda
+            const char = drop.palavra[drop.letraIdx % drop.palavra.length];
+
+            // Coordenada x da coluna
+            const x = i * fontSize;
+            const y = drop.y;
+
+            // Determinar cor do caractere
+            let color = '';
+            if (colorMode === 0) {
+                // Modo Mix (Verde e Vermelho)
+                color = drop.baseColor === 'verde' ? '#3E9A2D' : '#C80710';
+            } else if (colorMode === 1) {
+                // Modo Apenas Verde
+                color = '#3E9A2D';
+            } else {
+                // Modo Apenas Vermelho
+                color = '#C80710';
+            }
+
+            // Removido flashes brancos e sombras para manter a queda limpa e suave
+            ctx.fillStyle = color;
+            ctx.shadowBlur = 0;
+
+            ctx.fillText(char, x, y);
+
+            // Atualiza posição com incremento suave
+            drop.y += fontSize * 0.4 * drop.speed;
+            drop.letraIdx++;
+
+            // Só reinicia quando a palavra inteira ultrapassar o limite inferior da tela (rodapé)
+            if (drop.y > height) {
+                // Sorteia novo campus e redefine para o topo
+                drop.palavra = unidades[Math.floor(Math.random() * unidades.length)];
+                drop.letraIdx = 0;
+                drop.y = Math.random() * -150 - 50;
+                drop.speed = 0.35 + Math.random() * 0.45;
+                drop.baseColor = Math.random() > 0.35 ? 'verde' : 'vermelho';
+            }
+        }
+    }
+
+    // Spawn interativo ao clicar na tela
+    window.addEventListener('click', (e) => {
+        const colIdx = Math.floor(e.clientX / fontSize);
+        if (colIdx >= 0 && colIdx < drops.length) {
+            drops[colIdx].y = e.clientY - 100;
+            drops[colIdx].letraIdx = 0;
+            drops[colIdx].speed = 3; // Queda rápida
+        }
+    });
+
+    setInterval(draw, 33); // Aproximadamente 30 FPS para manter o visual retrô digital
+
+    // Função de Tela Cheia
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                alert(`Erro ao ativar tela cheia: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // Função para alterar modos de cor
+    function mudarCores() {
+        colorMode = (colorMode + 1) % 3;
+    }
+</script>
+
+</body>
+</html>

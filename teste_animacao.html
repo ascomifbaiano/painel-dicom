@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório de Animação - IF Baiano</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --if-verde: #3E9A2D;
+            --if-verde-escuro: #1A3C22;
+            --if-cinza-claro: #F0F4F1;
+            --if-fundo: #F4F9F4;
+            --if-branco: #FFFFFF;
+            --if-texto: #2C3E2F;
+            --if-borda-soft: rgba(0, 0, 0, 0.06);
+            --if-sombra: rgba(26, 60, 34, 0.05);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--if-fundo);
+            color: var(--if-texto);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--if-branco);
+            border: 1px solid var(--if-borda-soft);
+            box-shadow: 0 10px 30px var(--if-sombra);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--if-verde-escuro);
+            margin: 0 0 8px 0;
+        }
+
+        p.desc {
+            font-size: 14px;
+            color: #666;
+            margin: 0 0 32px 0;
+            line-height: 1.5;
+        }
+
+        /* ÁREA DE PRE-VISUALIZAÇÃO DA ANIMAÇÃO */
+        .preview-box {
+            background-color: var(--if-cinza-claro);
+            border-radius: 16px;
+            width: 100%;
+            height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            border: 1px solid var(--if-borda-soft);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-logo-wrapper {
+            position: relative;
+            width: 160px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader-logo-bg {
+            position: absolute;
+            height: 180px;
+            object-fit: contain;
+            filter: brightness(0) opacity(0.12); /* Silhueta de fundo (contornos) */
+            transition: all 0.3s ease;
+        }
+
+        .loader-logo-fill {
+            position: absolute;
+            height: 180px;
+            object-fit: contain;
+            clip-path: inset(100% 0 0 0);
+        }
+
+        /* Classe de animação automática */
+        .loader-logo-fill.animating {
+            animation: fill-liquid 3.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fill-liquid {
+            0% {
+                clip-path: inset(100% 0 0 0);
+            }
+            80% {
+                clip-path: inset(0 0 0 0);
+            }
+            100% {
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        /* CONTROLES INTERATIVOS */
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border-top: 1px solid var(--if-borda-soft);
+            padding-top: 24px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        button {
+            font-family: 'Outfit', sans-serif;
+            background: var(--if-cinza-claro);
+            border: 1px solid var(--if-borda-soft);
+            color: var(--if-verde-escuro);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        button.active {
+            background-color: var(--if-verde);
+            color: var(--if-branco);
+            border-color: var(--if-verde);
+            box-shadow: 0 4px 12px rgba(62, 154, 45, 0.2);
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .slider-group.active {
+            opacity: 1;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--if-verde-escuro);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--if-verde);
+            cursor: not-allowed;
+        }
+
+        .slider-group.active input[type="range"] {
+            cursor: pointer;
+        }
+
+        .info-card {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #777;
+            background-color: #fafafa;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px dashed #ddd;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Laboratório de Animação</h1>
+    <p class="desc">Audite a transição líquida da marca vertical do IF Baiano (preenchimento verde e vermelho no círculo superior).</p>
+    
+    <div class="preview-box">
+        <div class="loader-logo-wrapper">
+            <img src="marca-if-baiano-vertical.png" alt="Logo IF Baiano Silhueta" class="loader-logo-bg" id="logo-bg">
+            <img src="marca-if-baiano-vertical.png" alt="Logo IF Baiano Cor" class="loader-logo-fill animating" id="logo-fill">
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="btn-group">
+            <button id="btn-auto" class="active" onclick="setModo('auto')">🔄 Automático (Loop)</button>
+            <button id="btn-manual" onclick="setModo('manual')">🎛️ Manual (Slider)</button>
+        </div>
+
+        <div class="slider-group" id="slider-container">
+            <div class="slider-header">
+                <span>Nível de Líquido</span>
+                <span id="slider-val">0%</span>
+            </div>
+            <input type="range" id="liquid-range" min="0" max="100" value="0" oninput="updateManualValue(this.value)" disabled>
+        </div>
+
+        <div class="info-card">
+            💡 <strong>Como funciona tecnicamente:</strong> A silhueta de contorno é gerada por um filtro CSS de brilho nulo (`brightness(0) opacity(0.12)`). O efeito de líquido é realizado controlando um gradiente de recorte (`clip-path: inset(Y% 0 0 0)`). A cor verde e o círculo vermelho preenchem-se naturalmente de acordo com suas posições na imagem original.
+        </div>
+    </div>
+</div>
+
+<script>
+    const logoFill = document.getElementById('logo-fill');
+    const sliderContainer = document.getElementById('slider-container');
+    const sliderInput = document.getElementById('liquid-range');
+    const sliderValText = document.getElementById('slider-val');
+    const btnAuto = document.getElementById('btn-auto');
+    const btnManual = document.getElementById('btn-manual');
+
+    function setModo(modo) {
+        if (modo === 'auto') {
+            btnAuto.classList.add('active');
+            btnManual.classList.remove('active');
+            sliderContainer.classList.remove('active');
+            sliderInput.disabled = true;
+            logoFill.classList.add('animating');
+            logoFill.style.clipPath = '';
+        } else {
+            btnManual.classList.add('active');
+            btnAuto.classList.remove('active');
+            sliderContainer.classList.add('active');
+            sliderInput.disabled = false;
+            logoFill.classList.remove('animating');
+            updateManualValue(sliderInput.value);
+        }
+    }
+
+    function updateManualValue(val) {
+        sliderValText.innerText = val + '%';
+        // clip-path inset vai de 100% (vazio) a 0% (totalmente cheio)
+        const insetPercent = 100 - val;
+        logoFill.style.clipPath = `inset(${insetPercent}% 0 0 0)`;
+    }
+</script>
+
+</body>
+</html>
