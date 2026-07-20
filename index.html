@@ -637,114 +637,82 @@
             .tab-content { display: none !important; }
             .tab-content.active { display: block !important; }
             
-        /* LAYOUT DE DASHBOARD COM SIDEBAR */
-        .app-layout {
-            display: flex;
+        /* CONTAINER PRINCIPAL E LAYOUT */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 24px;
+            box-sizing: border-box;
+            background-color: var(--if-fundo);
             min-height: 100vh;
         }
 
-        /* SIDEBAR STYLES */
-        .app-sidebar {
-            width: 280px;
-            background-color: var(--if-verde-escuro);
-            color: var(--if-branco);
+        /* HEADER BRANDING E TOP BAR */
+        .content-header {
             display: flex;
-            flex-direction: column;
-            padding: 32px 24px;
-            box-sizing: border-box;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-        }
-
-        .sidebar-header {
-            margin-bottom: 30px;
-        }
-
-        .sidebar-logo-container {
-            background-color: var(--if-branco);
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: inline-flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
+            background: var(--if-branco);
+            padding: 24px 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--if-sombra);
             border: 1px solid var(--if-borda-soft);
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
-        .sidebar-logo {
-            width: 100%;
-            max-width: 110px;
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .logo-if {
+            width: 80px; /* Logo horizontal reduzida para 80px para maior equilíbrio */
             height: auto;
             object-fit: contain;
         }
 
-        .sidebar-header h2 {
-            font-size: 20px;
+        .header-title-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title-group h1 {
+            font-size: 24px;
             margin: 0;
-            font-weight: 700;
+            color: var(--if-verde-escuro);
+            font-weight: 800;
             letter-spacing: -0.02em;
         }
 
-        .sidebar-header p {
-            font-size: 11px;
+        .header-title-group p {
+            font-size: 13px;
             margin: 4px 0 0;
-            opacity: 0.6;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 700;
+            color: #666;
+            font-weight: 500;
         }
 
-        .sidebar-nav {
+        /* WIDGET DE SINCRONIZAÇÃO E ACERVO */
+        .info-badges {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-grow: 1;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            padding: 14px 18px;
-            border-radius: 8px;
-            font-size: 14px;
+        .badge {
+            font-size: 12px;
             font-weight: 600;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s ease;
-            font-family: inherit;
-            width: 100%;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--if-branco);
-        }
-
-        .nav-item.active {
-            background: var(--if-verde);
-            color: var(--if-branco);
-            box-shadow: 0 4px 12px rgba(62, 154, 45, 0.3);
-        }
-
-        .sidebar-footer {
-            margin-top: auto;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sync-widget {
-            display: flex;
+            color: var(--if-verde-escuro);
+            background-color: var(--if-transparente-verde);
+            padding: 6px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(62, 154, 45, 0.15);
+            display: inline-flex;
             align-items: center;
-            gap: 12px;
-            font-size: 11px;
+            gap: 6px;
         }
 
         .dot-sync {
@@ -752,55 +720,91 @@
             height: 8px;
             background-color: var(--if-verde);
             border-radius: 50%;
-            flex-shrink: 0;
+            display: inline-block;
         }
 
-        /* MAIN CONTENT AREA */
-        .app-content {
-            flex-grow: 1;
-            margin-left: 280px;
-            padding: 40px;
-            box-sizing: border-box;
-            min-height: 100vh;
-            background-color: var(--if-fundo);
-        }
-
-        .content-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
-            border-bottom: 1px solid var(--if-borda-soft);
-            padding-bottom: 20px;
-        }
-
-        .page-title h1 {
-            font-size: 28px;
-            margin: 0;
-            color: var(--if-verde-escuro);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-        }
-
-        .page-title p {
-            font-size: 14px;
-            margin: 4px 0 0;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .filtros-bar {
+        /* FILTROS E BOTÃO DE PDF */
+        .filtros-container {
             display: flex;
             align-items: flex-end;
-            gap: 12px;
+            justify-content: space-between;
+            gap: 16px;
             background: var(--if-branco);
-            padding: 16px 20px;
+            padding: 18px 24px;
             border-radius: 12px;
             border: 1px solid var(--if-borda-soft);
-            box-shadow: 0 4px 12px var(--if-sombra);
+            box-shadow: 0 4px 15px var(--if-sombra);
+            margin-bottom: 25px;
             flex-wrap: wrap;
+        }
+
+        .filtros-esq {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--if-verde-escuro);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-group input {
+            padding: 9px 12px;
+            border: 1px solid var(--if-borda-soft);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            background-color: var(--if-branco);
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--if-verde);
+        }
+
+        /* ABAS (TABS NAV HORIZONTAL) */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--if-borda-soft);
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .tab-btn.active {
+            color: var(--if-branco);
+            background: var(--if-verde);
+            box-shadow: 0 4px 10px rgba(62, 154, 45, 0.25);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--if-verde-escuro);
+            background: var(--if-cinza-claro);
         }
 
         /* DEFESO BANNER STYLES */
@@ -832,43 +836,47 @@
         }
 
         /* RESPONSIVE DESIGN */
-        @media (max-width: 990px) {
-            .app-sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
-                padding: 24px;
-                border-right: none;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .app-layout {
-                flex-direction: column;
-            }
-            .app-content {
-                margin-left: 0;
-                padding: 24px;
-            }
+        @media (max-width: 768px) {
             .content-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
-            .filtros-bar {
+            .info-badges {
+                align-items: flex-start;
                 width: 100%;
-                justify-content: flex-start;
+            }
+            .filtros-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filtros-esq {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .input-group input {
+                width: 100%;
+            }
+            .tab-btn {
+                flex-grow: 1;
+                text-align: center;
+                padding: 10px 10px;
+                font-size: 13px;
             }
         }
 
         @media print {
-            .app-sidebar {
+            .ticker-wrap, .tabs-nav, .filtros-container, .btn, .btn-pdf, .loading, .versao, .defeso-banner {
                 display: none !important;
             }
-            .app-content {
-                margin-left: 0 !important;
-                padding: 0 !important;
+            header { box-shadow: none; border: none; padding: 10px 0; margin-bottom: 20px; border-bottom: 2px solid var(--if-borda-soft); }
+            .info-badges { display: none; }
+            .stat-card, .chart-box, .inactivity-list, .table-box {
+                box-shadow: none;
+                border: 1px solid var(--if-borda-soft);
             }
-            .ticker-wrap, .filtros-bar, .loading, .versao, .defeso-banner {
-                display: none !important;
-            }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .tab-content { display: none !important; }
+            .tab-content.active { display: block !important; }
         }
 
         .cors-warning-card {
@@ -1015,58 +1023,49 @@
 </head>
 <body>
 
-<div class="app-layout">
-    <!-- SIDEBAR -->
-    <aside class="app-sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo-container">
-                <img src="marca-if-baiano-horizontal.png" alt="Logo IF Baiano" class="sidebar-logo">
-            </div>
-            <h2>Painel DICOM</h2>
-            <p>Portal Performance</p>
-        </div>
-        <nav class="sidebar-nav">
-            <button class="tab-btn active nav-item" onclick="abrirAba('aba-metricas', this)">
-                <span class="nav-icon">📈</span> Dashboard Analítico
-            </button>
-            <button class="tab-btn nav-item" onclick="abrirAba('aba-tabela', this)">
-                <span class="nav-icon">📋</span> Registros Oficiais
-            </button>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="sync-widget">
-                <span class="dot-sync" style="animation: pulse 2s infinite;"></span>
-                <div>
-                    <span id="info-atualizacao">Verificando sincronização...</span>
-                    <span id="info-piso" style="display:block; font-size:10px; opacity:0.7; margin-top:2px;">Buscando acervo...</span>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="app-content">
-        <!-- TOP BAR / HEADER -->
-        <header class="content-header">
-            <div class="page-title">
+<div class="container">
+    <!-- TOP BAR / HEADER -->
+    <header class="content-header">
+        <div class="header-brand">
+            <img src="marca-if-baiano-horizontal.png" alt="Logo IF Baiano" class="logo-if">
+            <div class="header-title-group">
                 <h1>Painel DICOM</h1>
                 <p>Estatísticas de publicações dos portais do IF Baiano</p>
             </div>
-            
-            <div class="filtros-bar">
-                <div class="input-group">
-                    <label for="data-inicio">De</label>
-                    <input type="date" id="data-inicio">
-                </div>
-                <div class="input-group">
-                    <label for="data-fim">Até</label>
-                    <input type="date" id="data-fim">
-                </div>
-                <button class="btn" onclick="aplicarFiltros()">Filtrar</button>
-                <button class="btn btn-sec" onclick="verTodoHistorico()">Ver Tudo</button>
-                <button class="btn btn-pdf" onclick="baixarRelatorio()">🖨️ PDF</button>
+        </div>
+        <div class="info-badges">
+            <span class="badge">
+                <span class="dot-sync" style="width: 8px; height: 8px; background: var(--if-verde); border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulse 2s infinite;"></span>
+                <span id="info-atualizacao">Verificando sincronização...</span>
+            </span>
+            <span class="badge" id="info-piso">Buscando acervo...</span>
+        </div>
+    </header>
+
+    <!-- FILTROS E AÇÕES -->
+    <div class="filtros-container">
+        <div class="filtros-esq">
+            <div class="input-group">
+                <label for="data-inicio">De</label>
+                <input type="date" id="data-inicio">
             </div>
-        </header>
+            <div class="input-group">
+                <label for="data-fim">Até</label>
+                <input type="date" id="data-fim">
+            </div>
+            <button class="btn" onclick="aplicarFiltros()">Filtrar</button>
+            <button class="btn btn-sec" onclick="verTodoHistorico()">Ver Tudo</button>
+        </div>
+        <div>
+            <button class="btn btn-pdf" onclick="baixarRelatorio()">🖨️ PDF</button>
+        </div>
+    </div>
+
+    <!-- SELETOR DE ABAS -->
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="abrirAba('aba-metricas', this)">📈 Dashboard Analítico</button>
+        <button class="tab-btn" onclick="abrirAba('aba-tabela', this)">📋 Registros Oficiais</button>
+    </div>
 
         <!-- AVISO DEFESO ELEITORAL TSE -->
         <div class="defeso-banner">
@@ -1500,7 +1499,6 @@
         atualizarGraficoPacing();
     }
 </script>
-    </main>
 </div>
 <!-- A11Y TOOLBAR & SCRIPT -->
 <div class="a11y-floating-bar">
