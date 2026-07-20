@@ -661,13 +661,24 @@
         }
 
         .sidebar-header {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar-logo-container {
+            background-color: var(--if-branco);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            border: 1px solid var(--if-borda-soft);
         }
 
         .sidebar-logo {
             width: 100%;
-            max-width: 180px;
-            margin-bottom: 20px;
+            max-width: 110px;
+            height: auto;
             object-fit: contain;
         }
 
@@ -859,7 +870,7 @@
                 display: none !important;
             }
         }
-    
+
         .cors-warning-card {
             background: var(--if-branco);
             border: 1px solid rgba(200, 7, 16, 0.2);
@@ -927,16 +938,40 @@
             gap: 24px;
         }
 
-        .loader-logo {
-            height: 140px;
-            object-fit: contain;
-            animation: pulse-scale 2s infinite ease-in-out;
+        .loader-logo-wrapper {
+            position: relative;
+            width: 140px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
         }
 
-        @keyframes pulse-scale {
-            0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(62, 154, 45, 0)); }
-            50% { transform: scale(1.05); filter: drop-shadow(0 4px 20px rgba(62, 154, 45, 0.2)); }
-            100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(62, 154, 45, 0)); }
+        .loader-logo-bg {
+            position: absolute;
+            height: 160px;
+            object-fit: contain;
+            filter: brightness(0) opacity(0.12); /* Silhueta escura de fundo (apenas contorno/forma) */
+        }
+
+        .loader-logo-fill {
+            position: absolute;
+            height: 160px;
+            object-fit: contain;
+            animation: fill-liquid 3.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fill-liquid {
+            0% {
+                clip-path: inset(100% 0 0 0); /* Começa vazio (apenas silhueta) */
+            }
+            80% {
+                clip-path: inset(0 0 0 0); /* Enche de baixo para cima (verde e depois vermelho) */
+            }
+            100% {
+                clip-path: inset(0 0 0 0); /* Permanece preenchido antes do ciclo reiniciar */
+            }
         }
 
         .loader-bar {
@@ -984,7 +1019,9 @@
     <!-- SIDEBAR -->
     <aside class="app-sidebar">
         <div class="sidebar-header">
-            <img src="marca-if-baiano-horizontal-branca.png" alt="Logo IF Baiano" class="sidebar-logo">
+            <div class="sidebar-logo-container">
+                <img src="marca-if-baiano-horizontal.png" alt="Logo IF Baiano" class="sidebar-logo">
+            </div>
             <h2>Painel DICOM</h2>
             <p>Portal Performance</p>
         </div>
@@ -1042,7 +1079,10 @@
 
         <div id="status" class="loading-overlay">
             <div class="loader-container">
-                <img src="marca-if-baiano-vertical.png" alt="Logo IF Baiano" class="loader-logo">
+                <div class="loader-logo-wrapper">
+                    <img src="marca-if-baiano-vertical.png" alt="Logo IF Baiano" class="loader-logo-bg">
+                    <img src="marca-if-baiano-vertical.png" alt="Logo IF Baiano" class="loader-logo-fill">
+                </div>
                 <div class="loader-bar">
                     <div class="loader-progress"></div>
                 </div>
